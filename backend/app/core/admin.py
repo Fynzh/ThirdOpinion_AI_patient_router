@@ -60,46 +60,56 @@ class StudyAdmin(admin.ModelAdmin):
     )
 
     def run_ai_analysis(self, request, queryset):
-        """
-        Action: запустить ИИ-анализ для выбранных исследований.
-        Появляется в выпадающем меню «Действие» над списком.
-        """
-        from nlp_module.analyzer import generate_recommendations
+        """Action: запустить ИИ-анализ для выбранных исследований."""
+        from nlp_module.analyzer import (
+            generate_recommendations,
+            RecommendationError,
+        )
+        from nlp_module.llm import call_llm
 
-        count = 0
+        ok = 0
+        errors = 0
         for study in queryset:
-            # Удаляем старые рекомендации от ИИ (если были)
             study.recommendations.filter(source='ai').delete()
-            # Вызываем NLP-модуль
-            result = generate_recommendations(
-                radiologist_conclusion=study.radiologist_conclusion,
-                patient_info={
-                    "full_name": study.patient.full_name,
-                    "birth_date": str(study.patient.birth_date),
-                }
-            )
-            # Сохраняем рекомендации в базу
+
+            try:
+                result = generate_recommendations(
+                    radiologist_conclusion=study.radiologist_conclusion,
+                    call_llm=call_llm,
+                )
+            except RecommendationError:
+                errors += 1
+                continue
+            except Exception:
+                errors += 1
+                continue
+
             for rec in result.get("recommendations", []):
                 Recommendation.objects.create(
                     study=study,
                     source='ai',
                     status='pending',
-                    specialist=rec.get("specialist", ""),
-                    specialty_code=rec.get("specialty_code", ""),
-                    reasoning=rec.get("reasoning", ""),
-                    priority=rec.get("priority", "medium"),
+                    specialist=rec["specialist"],
+                    specialty_code=rec["specialty_code"],
+                    reasoning=rec["reasoning"],
+                    priority=rec["priority"],
                     confidence=rec.get("confidence"),
                     raw_model_output=rec,
                 )
 
-            # Обновляем статус исследования
-            study.status = 'ai_done'
+            if result.get("status") == "no_findings":
+                study.status = 'approved'
+            else:
+                study.status = 'ai_done'
             study.save()
-            count += 1
+            ok += 1
+
         self.message_user(
             request,
-            f"✅ ИИ обработал {count} исследований. Рекомендации добавлены."
+            f"✅ ИИ обработал: {ok}. Ошибок: {errors}."
         )
+
+    run_ai_analysis.short_description = "🧠 Запустить ИИ-анализ"
 
     run_ai_analysis.short_description = "Запустить ИИ-анализ"
 
