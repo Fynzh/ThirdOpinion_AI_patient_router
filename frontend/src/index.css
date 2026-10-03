@@ -1,0 +1,18 @@
+:root {
+  --bg: #0f1014;
+  --surface: #17181d;
+  --border: #2a2c34;
+  --text: #9ca3af;
+  --text-h: #f3f4f6;
+  --pink: #e8449a;
+  --green: #2fbf71;
+  --radius: 12px;
+  --sans: 'Montserrat', system-ui, sans-serif;
+
+  font: 14px/1.4 var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: dark;
+}
+
+body { margin: 0; }
