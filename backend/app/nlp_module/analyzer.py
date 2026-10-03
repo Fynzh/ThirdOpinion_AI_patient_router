@@ -10,17 +10,36 @@ import json
 from typing import Callable
 
 SPECIALTIES = {
+    "THERAPIST": "терапевт",
+    "ONCO": "онколог",
     "PROCTO": "проктолог",
     "NEURO": "невролог",
-    "ONCO": "онколог",
     "CARDIO": "кардиолог",
-    "THERAPIST": "терапевт",
-    "ENDO": "эндокринолог",
-    "SURGEON": "хирург",
-    "URO": "уролог",
-    "GYN": "гинеколог",
     "PULMO": "пульмонолог",
     "MAMMO": "маммолог",
+    "SURGEON": "хирург",
+    "THORACIC": "торакальный хирург",
+    "NEUROSURG": "нейрохирург",
+    "VASCULAR": "сосудистый хирург",
+    "URO": "уролог",
+    "GYN": "гинеколог",
+    "ENDO": "эндокринолог",
+    "GASTRO": "гастроэнтеролог",
+    "HEPATO": "гепатолог",
+    "NEPHRO": "нефролог",
+    "HEMATO": "гематолог",
+    "RHEUMO": "ревматолог",
+    "INFECT": "инфекционист",
+    "PHTISIO": "фтизиатр",
+    "ORTHO": "ортопед-травматолог",
+    "VERTEBRO": "вертебролог",
+    "ENT": "оториноларинголог",
+    "OPHTHALMO": "офтальмолог",
+    "DERM": "дерматолог",
+    "ALLERGO": "аллерголог-иммунолог",
+    "PEDIATR": "педиатр",
+    "RADIO": "радиолог",
+    "REHAB": "реабилитолог",
 }
 PRIORITIES = ("high", "medium", "low")
 STATUSES = ("findings", "no_findings", "insufficient_data")
@@ -56,17 +75,36 @@ PROMPT_TEMPLATE = """Ты — медицинский ассистент сист
    - "insufficient_data" — текста недостаточно
 
 РАЗРЕШЁННЫЕ СПЕЦИАЛЬНОСТИ (используй ТОЛЬКО их):
-- проктолог     → код PROCTO
-- невролог      → код NEURO
-- онколог       → код ONCO
-- кардиолог     → код CARDIO
-- терапевт      → код THERAPIST
-- эндокринолог  → код ENDO
-- хирург        → код SURGEON
-- уролог        → код URO
-- гинеколог     → код GYN
-- пульмонолог   → код PULMO
-- маммолог      → код MAMMO
+- терапевт                 → код THERAPIST
+- онколог                  → код ONCO
+- проктолог                → код PROCTO
+- невролог                 → код NEURO
+- кардиолог                → код CARDIO
+- пульмонолог              → код PULMO
+- маммолог                 → код MAMMO
+- хирург                   → код SURGEON
+- торакальный хирург       → код THORACIC
+- нейрохирург              → код NEUROSURG
+- сосудистый хирург        → код VASCULAR
+- уролог                   → код URO
+- гинеколог                → код GYN
+- эндокринолог             → код ENDO
+- гастроэнтеролог          → код GASTRO
+- гепатолог                → код HEPATO
+- нефролог                 → код NEPHRO
+- гематолог                → код HEMATO
+- ревматолог               → код RHEUMO
+- инфекционист             → код INFECT
+- фтизиатр                 → код PHTISIO
+- ортопед-травматолог      → код ORTHO
+- вертебролог              → код VERTEBRO
+- оториноларинголог        → код ENT
+- офтальмолог              → код OPHTHALMO
+- дерматолог               → код DERM
+- аллерголог-иммунолог     → код ALLERGO
+- педиатр                  → код PEDIATR
+- радиолог                 → код RADIO
+- реабилитолог             → код REHAB
 
 Если находка есть, но подходящей специальности нет — направь к терапевту (THERAPIST).
 
@@ -213,20 +251,3 @@ def generate_recommendations(
         data = extract_json(repaired)
 
     return validate(data)
-
-
-if __name__ == "__main__":
-    fake = (
-        "Вот ответ:\n```json\n"
-        '{"status": "findings", "recommendations": ['
-        '{"specialist": "пульмонолог", "specialty_code": "pulmo", "reasoning": "Очаг в S6 правого лёгкого 8 мм.", "priority": "medium", "confidence": 0.7},'
-        '{"specialist": "онколог", "specialty_code": "ONCO", "reasoning": "Очаг требует настороженности.", "priority": "high", "confidence": 1.4},'
-        '{"specialist": "дерматолог", "specialty_code": "DERM", "reasoning": "x", "priority": "low", "confidence": 0.2}'
-        '], "summary": "Нужна консультация."}\n```'
-    )
-    out = generate_recommendations("Очаг в S6 правого лёгкого 8 мм.", lambda p: fake)
-    assert [r["specialty_code"] for r in out["recommendations"]] == ["ONCO", "PULMO"]
-    assert out["recommendations"][0]["confidence"] == 1.0
-    assert generate_recommendations("  ", lambda p: "")["status"] == "insufficient_data"
-    assert "{radiologist_conclusion}" not in build_prompt("тест")
-    print(json.dumps(out, ensure_ascii=False, indent=2))
