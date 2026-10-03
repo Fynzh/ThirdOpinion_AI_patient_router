@@ -1,0 +1,148 @@
+/* Стили компонентов. Использует переменные из index.css:
+   --surface, --border, --text, --text-h, --pink, --green, --radius */
+
+:root {
+  --gradient: linear-gradient(90deg, #e8449a, #8b5cf6); /* заменить на градиент платформы */
+  --amber: #f5a524;
+  --teal: #2bb3c0;
+  --gray: #6b7280;
+}
+
+.layout__header {
+  display: flex;
+  align-items: center;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+}
+.layout__logo {
+  color: var(--text-h);
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.layout__main {
+  padding: 24px 32px;
+}
+
+.breadcrumbs {
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 13px;
+}
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.page-title {
+  margin: 0;
+  color: var(--text-h);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.button {
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--gradient);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.input {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text-h);
+  font: inherit;
+}
+.input::placeholder {
+  color: var(--text);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.table th,
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.table th {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+}
+.table td {
+  color: var(--text-h);
+}
+.table tbody tr {
+  cursor: pointer;
+}
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.table tbody tr:hover,
+.table tbody tr:focus-visible {
+  background: rgba(255, 255, 255, 0.04);
+  outline: none;
+}
+.table__sort {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.status__dot--gray { background: var(--gray); }
+.status__dot--pink { background: var(--pink); }
+.status__dot--amber { background: var(--amber); }
+.status__dot--green { background: var(--green); }
+.status__dot--teal { background: var(--teal); }
+
+.state {
+  padding: 48px 16px;
+  color: var(--text);
+  text-align: center;
+}
+.state--error {
+  color: var(--pink);
+}
