@@ -98,7 +98,6 @@ class Recommendation(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Ожидает проверки'),
         ('approved', 'Одобрена'),
-        ('edited', 'Изменена врачом'),
         ('rejected', 'Отклонена'),
     ]
     PRIORITY_CHOICES = [

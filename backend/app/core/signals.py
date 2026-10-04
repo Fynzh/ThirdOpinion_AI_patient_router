@@ -93,13 +93,13 @@ from .models import Recommendation
 
 
 @receiver(pre_save, sender=Recommendation)
-def auto_mark_edited(sender, instance: Recommendation, **kwargs):
+def auto_reset_status_on_edit(sender, instance: Recommendation, **kwargs):
     """
-    Любое изменение содержимого рекомендации переводит её в:
-        source='doctor', status='edited'
+    Любое изменение содержимого рекомендации:
+    - переводит авторство врачу (source='doctor');
+    - сбрасывает статус в 'pending' (ожидает проверки).
 
-    Работает в том числе для уже approved/rejected — если врач передумал,
-    рекомендация откатывается в 'edited' и требует повторного одобрения.
+    Так после правки врач обязан заново нажать «Одобрить» или «Отклонить».
     """
     if not instance.pk:
         return
@@ -113,19 +113,19 @@ def auto_mark_edited(sender, instance: Recommendation, **kwargs):
         return (v or "").strip() if isinstance(v, str) else v
 
     content_changed = (
-        _norm(old.specialist) != _norm(instance.specialist)
-        or _norm(old.specialty_code) != _norm(instance.specialty_code)
-        or _norm(old.reasoning) != _norm(instance.reasoning)
-        or old.priority != instance.priority
-        or old.confidence != instance.confidence
+            _norm(old.specialist) != _norm(instance.specialist)
+            or _norm(old.specialty_code) != _norm(instance.specialty_code)
+            or _norm(old.reasoning) != _norm(instance.reasoning)
+            or old.priority != instance.priority
+            or old.confidence != instance.confidence
     )
 
     if not content_changed:
         return
 
     instance.source = "doctor"
-    instance.status = "edited"
+    instance.status = "pending"
     logger.info(
-        "Recommendation #%s: врач изменил содержимое → source='doctor', status='edited'",
+        "Recommendation #%s: правка → source='doctor', status='pending'",
         instance.pk,
     )

@@ -12,12 +12,12 @@ def get_patient_full_name(patient_code: str) -> str:
 # ============================================
 class RecommendationInline(admin.TabularInline):
     model = Recommendation
-    extra = 0  # не показывать пустые строки для добавления
+    extra = 0
     fields = (
         'source', 'specialist', 'priority', 'status',
         'reasoning', 'confidence'
     )
-    readonly_fields = ('source', 'confidence')
+    readonly_fields = ('source', 'status', 'confidence')
 
 # ============================================
 # ПАЦИЕНТ — анонимный в БД, персональные данные в JSON
@@ -105,6 +105,7 @@ class StudyAdmin(admin.ModelAdmin):
     inlines = [RecommendationInline]  # ← рекомендации внутри карточки
     ordering = ('-created_at',)
     actions = ['run_ai_analysis']
+    readonly_fields = ('status',)
 
     fieldsets = (
         ('Пациент', {
@@ -117,8 +118,15 @@ class StudyAdmin(admin.ModelAdmin):
             'fields': ('radiologist_conclusion',),
             'description': 'Этот текст пойдёт в NLP-модель для анализа'
         }),
-        ('Статус', {
-            'fields': ('status',)
+        ('Текущий статус', {
+            'fields': ('status',),
+            'description': (
+                'Статус меняется автоматически: '
+                'processing — ИИ обрабатывает, '
+                'ai_done — ИИ ответил, ждёт врача, '
+                'approved — план утверждён, '
+                'sent — отправлен пациенту.'
+            ),
         }),
     )
 
@@ -213,16 +221,28 @@ class RecommendationAdmin(admin.ModelAdmin):
     )
     list_filter = ('source', 'status', 'priority')
     search_fields = ('specialist', 'reasoning')
-    readonly_fields = ('source', 'raw_model_output', 'created_at', 'study_conclusion_display')
+    readonly_fields = (
+        'source', 'status',
+        'raw_model_output', 'created_at', 'study_conclusion_display',
+    )
     ordering = ('-created_at',)
     actions = ['approve_selected', 'reject_selected']
 
     fieldsets = (
         ('Основное', {
             'fields': (
-                'study', 'source', 'status',
+                'study', 'source',
                 'specialist', 'specialty_code',
                 'reasoning', 'priority', 'confidence',
+            ),
+        }),
+        ('Текущий статус', {
+            'fields': ('status',),
+            'description': (
+                'Статус меняется автоматически: '
+                'pending — ждёт проверки, '
+                'approved — одобрена кнопкой, '
+                'rejected — отклонена кнопкой.'
             ),
         }),
         ('Заключение рентгенолога (для сверки)', {
