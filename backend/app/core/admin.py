@@ -196,10 +196,10 @@ class StudyAdmin(admin.ModelAdmin):
 
         self.message_user(
             request,
-            f"✅ ИИ обработал: {ok}. Ошибок: {errors}."
+            f"🔄 Перегенерировано: {ok}. Ошибок: {errors}."
         )
 
-    run_ai_analysis.short_description = "Запустить ИИ-анализ"
+    run_ai_analysis.short_description = "🔄 Перегенерировать рекомендации"
 
 # ============================================
 # РЕКОМЕНДАЦИЯ — отдельная карточка
