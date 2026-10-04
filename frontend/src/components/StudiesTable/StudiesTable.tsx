@@ -1,15 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import type { StudyListItem, StudyStatus } from '@/types/study';
+import type { StudyListItem } from '@/types/study';
 import { formatDateTime, formatDate } from '@/utils/formatDateTime';
 import s from './StudiesTable.module.css';
-
-const STATUS_DOT: Record<StudyStatus, string> = {
-  processing: s.grey,
-  ai_done: s.blue,
-  in_review: s.yellow,
-  approved: s.green,
-  sent: s.green,
-};
 
 interface StudiesTableProps {
   studies: StudyListItem[];
@@ -29,7 +21,6 @@ export default function StudiesTable({ studies, isEditing, selectedIds, onToggle
             <th>Пациент</th>
             <th>Тип исследования</th>
             <th>Дата исследования</th>
-            <th>Статус</th>
             <th>Рекомендации</th>
             <th>Дата загрузки</th>
           </tr>
@@ -66,12 +57,6 @@ export default function StudiesTable({ studies, isEditing, selectedIds, onToggle
                 </td>
                 <td>{st.modality_display}</td>
                 <td>{formatDate(st.study_date)}</td>
-                <td>
-                  <span className={s.status}>
-                    <span className={`${s.dot} ${STATUS_DOT[st.status]}`} aria-hidden="true" />
-                    {st.status_display}
-                  </span>
-                </td>
                 <td>{st.recommendations_count}</td>
                 <td>{formatDateTime(st.created_at)}</td>
                 </tr>
