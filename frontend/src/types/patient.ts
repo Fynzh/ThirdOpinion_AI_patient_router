@@ -18,3 +18,30 @@ export interface Patient {
 
 /** Минимум, который есть в списке исследований: из него собирается выпадающий список */
 export type PatientSummary = Pick<Patient, 'id' | 'patient_code' | 'full_name'>;
+
+/** Значения формы нового пациента (до отправки) */
+export interface PatientFormValues {
+  full_name: string;
+  birth_date: ISODate | '';
+  sex: Sex | '';
+  phone: string;
+  email: string;
+}
+
+export const EMPTY_PATIENT_FORM: PatientFormValues = {
+  full_name: '',
+  birth_date: '',
+  sex: '',
+  phone: '',
+  email: '',
+};
+
+/** Тело POST /api/patients/ (контракт, который нужно запросить у бэка) */
+export interface NewPatientPayload {
+  full_name: string;
+  birth_date: ISODate;
+  sex: Sex;
+  age: number;
+  phone: string;
+  email: string;
+}

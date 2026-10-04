@@ -1,10 +1,10 @@
-import type { StudyDetail, StudyListItem } from '@/types/study';
+import type { StudyDetail, StudyListItem, NewStudyPayload } from '@/types/study';
 import type {
   AddDoctorRecommendationPayload,
   GenerateRecommendationsResponse,
   Recommendation,
 } from '@/types/recommendation';
-import { USE_MOCK, delay, getJson, postJson, unwrapList } from './http';
+import { USE_MOCK, delay, getJson, postJson, unwrapList, postForm } from './http';
 
 const MOCK_STUDIES: StudyListItem[] = [
   {
@@ -46,3 +46,13 @@ export const generateRecommendations = (studyId: number) =>
 
 export const addDoctorRecommendation = (studyId: number, payload: AddDoctorRecommendationPayload) =>
   postJson<Recommendation>(`/api/studies/${studyId}/add-recommendation/`, payload);
+
+export function createStudy(payload: NewStudyPayload) {
+  const form = new FormData();
+  form.append('patient', String(payload.patient));
+  form.append('modality', payload.modality);
+  form.append('study_date', payload.study_date);
+  form.append('radiologist_conclusion', payload.radiologist_conclusion);
+  if (payload.file) form.append('file', payload.file);
+  return postForm<StudyDetail>('/api/studies/', form);
+}

@@ -51,3 +51,19 @@ export interface StudyDetail {
   created_at: ISODateTime;
   updated_at: ISODateTime;
 }
+
+/** Данные для POST /api/studies/ (отправляется как multipart) */
+export interface NewStudyPayload {
+  patient: number;
+  modality: Modality;
+  study_date: ISODate;
+  radiologist_conclusion: string;
+  file: File | null;
+}
+
+/** «Доступное исследование» пациента: из него подставляется текст заключения (бэк пока не реализовал) */
+export interface AvailableStudy {
+  id: number;
+  title: string;
+  conclusion: string;
+}

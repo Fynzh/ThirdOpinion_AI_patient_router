@@ -21,15 +21,16 @@ const PUBLIC_URLS = ['/api/auth/login/', '/api/auth/register/'];
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
   const isPublic = PUBLIC_URLS.includes(url);
   const token = isPublic ? null : getToken();
-
+  const isForm = body instanceof FormData;
+  
   const headers: Record<string, string> = {};
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
   if (token) headers.Authorization = `Token ${token}`;
 
   const response = await fetch(url, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
   });
 
   if (response.status === 401 && !isPublic) {
@@ -47,6 +48,7 @@ async function request<T>(method: string, url: string, body?: unknown): Promise<
 
 export const getJson = <T>(url: string) => request<T>('GET', url);
 export const postJson = <T>(url: string, body?: unknown) => request<T>('POST', url, body);
+export const postForm = <T>(url: string, form: FormData) => request<T>('POST', url, form);
 export const patchJson = <T>(url: string, body?: unknown) => request<T>('PATCH', url, body);
 
 /** Работает и с пагинацией DRF, и с обычным массивом */

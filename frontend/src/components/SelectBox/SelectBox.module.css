@@ -1,7 +1,8 @@
 .root {
   position: relative;
-  width: 360px;
+  width: 100%;
   max-width: 100%;
+  min-width: 0;
 }
 
 .trigger {
@@ -17,6 +18,12 @@
   color: #fff;
   font: inherit;
   cursor: pointer;
+}
+
+.trigger > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .trigger:disabled {

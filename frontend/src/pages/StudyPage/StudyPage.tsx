@@ -7,6 +7,7 @@ import { approveRecommendation, editRecommendation, rejectRecommendation } from 
 import { useStudy } from '@/hooks/useStudy';
 import { SEX_LABELS } from '@/types/patient';
 import { formatDate } from '@/utils/formatDateTime';
+import TextBox from '@/components/TextBox/TextBox';
 import s from './StudyPage.module.css';
 
 export default function StudyPage() {
@@ -50,11 +51,16 @@ export default function StudyPage() {
         {p.patient_code} · {SEX_LABELS[p.sex]}, {p.age} лет · {study.modality_display} от {formatDate(study.study_date)}
       </p>
       <p className={s.status}>{study.status_display}</p>
-
+        
       <section className={s.block}>
-        <h3>Заключение рентгенолога</h3>
-        <p className={s.conclusion}>{study.radiologist_conclusion}</p>
-        {study.file && <a href={study.file} target="_blank" rel="noreferrer">Открыть файл исследования</a>}
+        <TextBox title="Заключение платформы «Третье Мнение»">
+            {study.radiologist_conclusion || 'Заключение не заполнено'}
+        </TextBox>
+        {study.file && (
+            <a className={s.file} href={study.file} target="_blank" rel="noreferrer">
+            Открыть файл исследования
+            </a>
+        )}
       </section>
 
       <section className={s.block}>

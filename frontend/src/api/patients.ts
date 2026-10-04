@@ -1,6 +1,8 @@
-import type { PatientSummary } from '@/types/patient';
+import type { NewPatientPayload, Patient, PatientSummary } from '@/types/patient';
 import { USE_MOCK, delay } from './http';
 import { fetchStudies } from './studies';
+import type { AvailableStudy } from '@/types/study';
+import { postJson } from './http';
 
 const MOCK_PATIENTS: PatientSummary[] = [
   { id: 1, patient_code: 'PAT-2026-A3F8B1', full_name: 'Тестовый Пациент Первый' },
@@ -27,4 +29,13 @@ export async function fetchPatients(): Promise<PatientSummary[]> {
   return [...unique.values()].sort((a, b) =>
   (a.full_name || a.patient_code).localeCompare(b.full_name || b.patient_code, 'ru'),
 );
+}
+
+export const createPatient = (payload: NewPatientPayload) =>
+  postJson<Patient>('/api/patients/', payload);
+
+/** TODO: GET /api/patients/<id>/available-studies/, бэк пока не реализовал */
+export async function fetchAvailableStudies(patientId: number): Promise<AvailableStudy[]> {
+  void patientId;
+  return [];
 }
