@@ -125,7 +125,6 @@ class Recommendation(models.Model):
     )
     confidence = models.FloatField(null=True, blank=True, verbose_name="Уверенность ИИ")
 
-    doctor_comment = models.TextField(blank=True, verbose_name="Комментарий врача")
     raw_model_output = models.JSONField(default=dict, blank=True)
 
     reviewed_by = models.ForeignKey(

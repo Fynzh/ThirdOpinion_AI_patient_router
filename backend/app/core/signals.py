@@ -95,40 +95,37 @@ from .models import Recommendation
 @receiver(pre_save, sender=Recommendation)
 def auto_mark_edited(sender, instance: Recommendation, **kwargs):
     """
-    Автоматически ставит статус 'edited', если врач изменил
-    ключевые поля рекомендации (специалист, обоснование, приоритет).
+    Любое изменение содержимого рекомендации переводит её в:
+        source='doctor', status='edited'
 
-    НЕ трогает рекомендации от врача (source='doctor').
-    НЕ трогает, если статус уже был approved/rejected.
+    Работает в том числе для уже approved/rejected — если врач передумал,
+    рекомендация откатывается в 'edited' и требует повторного одобрения.
     """
-    # Новую рекомендацию не трогаем
     if not instance.pk:
         return
 
-    # Рекомендации от врача — его собственные, статус уже approved
-    if instance.source != "ai":
-        return
-
-    # Достаём старое состояние из БД
     try:
         old = Recommendation.objects.get(pk=instance.pk)
     except Recommendation.DoesNotExist:
         return
 
-    # Если статус уже approved/rejected — не перезаписываем
-    if old.status in ("approved", "rejected"):
-        return
+    def _norm(v):
+        return (v or "").strip() if isinstance(v, str) else v
 
-    # Проверяем, изменились ли ключевые поля
-    fields_changed = (
-            old.specialist != instance.specialist
-            or old.reasoning != instance.reasoning
-            or old.priority != instance.priority
+    content_changed = (
+        _norm(old.specialist) != _norm(instance.specialist)
+        or _norm(old.specialty_code) != _norm(instance.specialty_code)
+        or _norm(old.reasoning) != _norm(instance.reasoning)
+        or old.priority != instance.priority
+        or old.confidence != instance.confidence
     )
 
-    if fields_changed:
-        instance.status = "edited"
-        logger.info(
-            "Recommendation #%s: врач изменил поля → статус 'edited'",
-            instance.pk,
-        )
+    if not content_changed:
+        return
+
+    instance.source = "doctor"
+    instance.status = "edited"
+    logger.info(
+        "Recommendation #%s: врач изменил содержимое → source='doctor', status='edited'",
+        instance.pk,
+    )

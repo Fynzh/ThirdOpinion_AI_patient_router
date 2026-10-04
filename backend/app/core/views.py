@@ -140,10 +140,6 @@ class EditRecommendationView(APIView):
         if priority in ["high", "medium", "low"]:
             rec.priority = priority
 
-        doctor_comment = request.data.get("doctor_comment")
-        if doctor_comment is not None:
-            rec.doctor_comment = doctor_comment
-
         if request.user.is_authenticated:
             rec.reviewed_by = request.user
         rec.reviewed_at = timezone.now()
@@ -173,8 +169,6 @@ class ApproveRecommendationView(APIView):
             )
 
         rec.status = "approved"
-        if request.data.get("doctor_comment") is not None:
-            rec.doctor_comment = request.data.get("doctor_comment", "")
         if request.user.is_authenticated:
             rec.reviewed_by = request.user
         rec.reviewed_at = timezone.now()
@@ -201,8 +195,6 @@ class RejectRecommendationView(APIView):
             )
 
         rec.status = "rejected"
-        if request.data.get("doctor_comment") is not None:
-            rec.doctor_comment = request.data.get("doctor_comment", "")
         if request.user.is_authenticated:
             rec.reviewed_by = request.user
         rec.reviewed_at = timezone.now()
@@ -247,7 +239,6 @@ class AddDoctorRecommendationView(APIView):
             specialty_code="",
             reasoning=reasoning,
             priority=priority,
-            doctor_comment=request.data.get("doctor_comment", ""),
             reviewed_at=timezone.now(),
             reviewed_by=request.user if request.user.is_authenticated else None,
         )

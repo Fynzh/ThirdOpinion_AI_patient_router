@@ -1,0 +1,52 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+
+    {% if original %}
+    <div class="submit-row" style="
+        margin-top: 16px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    ">
+        <p style="margin: 0 0 12px; font-weight: 600; color: #495057;">
+            Заключение врача
+        </p>
+
+        <input type="submit"
+               value="✅ Одобрить"
+               name="_approve_recommendation"
+               style="
+                   background: #28a745;
+                   color: white;
+                   padding: 10px 24px;
+                   border: none;
+                   border-radius: 4px;
+                   font-weight: 600;
+                   cursor: pointer;
+                   margin-right: 8px;
+               ">
+
+        <input type="submit"
+               value="❌ Отклонить"
+               name="_reject_recommendation"
+               style="
+                   background: #dc3545;
+                   color: white;
+                   padding: 10px 24px;
+                   border: none;
+                   border-radius: 4px;
+                   font-weight: 600;
+                   cursor: pointer;
+               ">
+
+        <p style="margin: 12px 0 0; color: #6c757d; font-size: 12px;">
+            «Одобрить» — рекомендация попадёт в финальный план.
+            «Отклонить» — не попадёт.
+            Изменения полей автоматически помечают её как «Изменена врачом».
+        </p>
+    </div>
+    {% endif %}
+{% endblock %}

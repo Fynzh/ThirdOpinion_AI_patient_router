@@ -15,7 +15,7 @@ class RecommendationInline(admin.TabularInline):
     extra = 0  # не показывать пустые строки для добавления
     fields = (
         'source', 'specialist', 'priority', 'status',
-        'reasoning', 'doctor_comment', 'confidence'
+        'reasoning', 'confidence'
     )
     readonly_fields = ('source', 'confidence')
 
@@ -206,13 +206,14 @@ class StudyAdmin(admin.ModelAdmin):
 # ============================================
 @admin.register(Recommendation)
 class RecommendationAdmin(admin.ModelAdmin):
+    change_form_template = "admin/core/recommendation/change_form.html"
     list_display = (
         'id', 'study', 'patient_full_name_display',
-        'specialist', 'source', 'priority', 'status', 'confidence'
+        'specialist', 'source_display', 'priority', 'status', 'confidence'
     )
     list_filter = ('source', 'status', 'priority')
     search_fields = ('specialist', 'reasoning')
-    readonly_fields = ('raw_model_output', 'created_at', 'study_conclusion_display')
+    readonly_fields = ('source', 'raw_model_output', 'created_at', 'study_conclusion_display')
     ordering = ('-created_at',)
     actions = ['approve_selected', 'reject_selected']
 
@@ -232,7 +233,8 @@ class RecommendationAdmin(admin.ModelAdmin):
             ),
         }),
         ('Заключение врача', {
-            'fields': ('doctor_comment', 'reviewed_by', 'reviewed_at'),
+            'fields': ('reviewed_by', 'reviewed_at'),
+            'description': 'Правки вносите в поле «Обоснование» выше.',
         }),
     )
 
@@ -273,6 +275,46 @@ class RecommendationAdmin(admin.ModelAdmin):
             rec.save()
             count += 1
         self.message_user(request, f"❌ Отклонено: {count}")
+    def response_change(self, request, obj):
+        """
+        Перехватывает нажатия наших кнопок «Одобрить» / «Отклонить».
+        Срабатывает ПОСЛЕ стандартного сохранения формы.
+        """
+        from django.http import HttpResponseRedirect
+        from django.utils import timezone
+
+        # Нажали «Одобрить»
+        if "_approve_recommendation" in request.POST:
+            obj.status = "approved"
+            if request.user.is_authenticated:
+                obj.reviewed_by = request.user
+            obj.reviewed_at = timezone.now()
+            obj.save()
+            self.message_user(
+                request,
+                f"✅ Рекомендация #{obj.id} одобрена.",
+            )
+            return HttpResponseRedirect(request.path)
+
+        # Нажали «Отклонить»
+        if "_reject_recommendation" in request.POST:
+            obj.status = "rejected"
+            if request.user.is_authenticated:
+                obj.reviewed_by = request.user
+            obj.reviewed_at = timezone.now()
+            obj.save()
+            self.message_user(
+                request,
+                f"❌ Рекомендация #{obj.id} отклонена.",
+            )
+            return HttpResponseRedirect(request.path)
+
+        # Обычное сохранение — стандартная логика Django
+        return super().response_change(request, obj)
+
+    @admin.display(description="Источник", ordering="source")
+    def source_display(self, obj):
+        return obj.get_source_display()
 
 # ============================================
 # ПЛАН ОБРАЩЕНИЯ
