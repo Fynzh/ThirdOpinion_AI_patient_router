@@ -8,9 +8,14 @@ from .views import (
     RejectRecommendationView,
     AddDoctorRecommendationView,
 )
+from .auth_views import RegisterView, LoginView, LogoutView, MeView
 
 urlpatterns = [
     # Исследования
+    path("auth/register/", RegisterView.as_view(), name="auth-register"),
+    path("auth/login/", LoginView.as_view(), name="auth-login"),
+    path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
+    path("auth/me/", MeView.as_view(), name="auth-me"),
     path("studies/", StudyListView.as_view(), name="study-list"),
     path("studies/<int:pk>/", StudyDetailView.as_view(), name="study-detail"),
     path("studies/<int:pk>/generate/",
