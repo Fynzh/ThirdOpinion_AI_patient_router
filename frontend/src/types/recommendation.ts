@@ -5,7 +5,6 @@ export const RECOMMENDATION_SOURCE_LABELS = { ai: 'ИИ', doctor: 'Врач' } a
 export const RECOMMENDATION_STATUS_LABELS = {
   pending: 'Ожидает проверки',
   approved: 'Одобрена',
-  edited: 'Изменена врачом',
   rejected: 'Отклонена',
 } as const;
 
@@ -29,7 +28,6 @@ export interface Recommendation {
   priority_display: string;
   confidence: number | null;
   study_conclusion: string;
-  doctor_comment: string;
   raw_model_output: Record<string, unknown>;
   reviewed_by: number | null;
   reviewed_at: ISODateTime | null;
@@ -41,12 +39,6 @@ export interface EditRecommendationPayload {
   specialist?: string;
   reasoning?: string;
   priority?: Priority;
-  doctor_comment?: string;
-}
-
-/** POST /api/recommendations/{id}/approve/ и /reject/ */
-export interface RecommendationDecisionPayload {
-  doctor_comment?: string;
 }
 
 import type { StudyStatus } from './study';
@@ -55,7 +47,6 @@ export interface AddDoctorRecommendationPayload {
   specialist: string; // обязательны, иначе 400 VALIDATION_ERROR
   reasoning: string;
   priority?: Priority;
-  doctor_comment?: string;
 }
 
 export interface GenerateRecommendationsResponse {

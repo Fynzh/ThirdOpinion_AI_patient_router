@@ -1,15 +1,11 @@
-import type {
-  EditRecommendationPayload,
-  Recommendation,
-  RecommendationDecisionPayload,
-} from '@/types/recommendation';
+import type { EditRecommendationPayload, Recommendation } from '@/types/recommendation';
 import { patchJson, postJson } from './http';
 
 export const editRecommendation = (id: number, payload: EditRecommendationPayload) =>
   patchJson<Recommendation>(`/api/recommendations/${id}/edit/`, payload);
 
-export const approveRecommendation = (id: number, payload: RecommendationDecisionPayload = {}) =>
-  postJson<Recommendation>(`/api/recommendations/${id}/approve/`, payload);
+export const approveRecommendation = (id: number) =>
+  postJson<Recommendation>(`/api/recommendations/${id}/approve/`);
 
-export const rejectRecommendation = (id: number, payload: RecommendationDecisionPayload = {}) =>
-  postJson<Recommendation>(`/api/recommendations/${id}/reject/`, payload);
+export const rejectRecommendation = (id: number) =>
+  postJson<Recommendation>(`/api/recommendations/${id}/reject/`);
