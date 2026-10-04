@@ -59,6 +59,8 @@ class GenerateRecommendationsView(APIView):
             result = generate_recommendations(
                 radiologist_conclusion=study.radiologist_conclusion,
                 call_llm=call_llm,
+                patient_age=study.patient.age,
+                patient_sex=study.patient.sex,
             )
         except RecommendationError as e:
             return Response(
@@ -129,12 +131,6 @@ class ReviewRecommendationView(APIView):
                  "code": "VALIDATION_ERROR"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        # Сохраняем оригинал при первом редактировании
-        if rec.source == "ai" and not rec.original_specialist:
-            rec.original_specialist = rec.specialist
-            rec.original_reasoning = rec.reasoning
-            rec.original_priority = rec.priority
 
         # Применяем изменения, если врач изменил
         if decision == "edited":

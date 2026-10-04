@@ -1,23 +1,49 @@
 from django.db import models
 from django.contrib.auth.models import User
+import uuid
+from datetime import datetime
+
 class Patient(models.Model):
+    """
+    Пациент — АНОНИМНЫЙ.
+    Персональные данные (ФИО, дата рождения, телефон, email)
+    хранятся в отдельном JSON-файле patient_registry.json.
+    В БД — только код и обезличенные медицинские параметры.
+    """
+    SEX_CHOICES = [
+        ("M", "Мужской"),
+        ("F", "Женский"),
+    ]
+
     patient_code = models.CharField(
-        max_length=50, blank=True, null=True,
-        verbose_name="Анонимный код пациента",
-        help_text="Например: PAT-2026-0001"
+        max_length=50, unique=True, blank=True,
+        verbose_name="Код пациента",
+        help_text="Генерируется автоматически. Например: PAT-2026-A3F8B1",
     )
-    full_name = models.CharField(max_length=200, verbose_name="ФИО")
-    birth_date = models.DateField(verbose_name="Дата рождения")
-    phone = models.CharField(max_length=20, blank=True, verbose_name="Телефон")
-    email = models.EmailField(blank=True, verbose_name="Email")
+    age = models.PositiveIntegerField(verbose_name="Возраст")
+    sex = models.CharField(
+        max_length=1, choices=SEX_CHOICES, verbose_name="Пол"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Пациент"
         verbose_name_plural = "Пациенты"
+        ordering = ["-created_at"]
 
     def __str__(self):
-        return self.full_name
+        return self.patient_code
+
+    def save(self, *args, **kwargs):
+        if not self.patient_code:
+            self.patient_code = self._generate_code()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def _generate_code() -> str:
+        """Генерирует уникальный код вида PAT-2026-A3F8B1."""
+        year = datetime.now().year
+        return f"PAT-{year}-{uuid.uuid4().hex[:6].upper()}"
 
 class Study(models.Model):
     MODALITY_CHOICES = [
@@ -62,7 +88,7 @@ class Study(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.get_modality_display()} — {self.patient.full_name} ({self.study_date})"
+        return f"{self.get_modality_display()} — {self.patient.patient_code} ({self.study_date})"
 
 class Recommendation(models.Model):
     SOURCE_CHOICES = [
@@ -98,10 +124,6 @@ class Recommendation(models.Model):
         max_length=10, choices=PRIORITY_CHOICES, default='medium', verbose_name="Приоритет"
     )
     confidence = models.FloatField(null=True, blank=True, verbose_name="Уверенность ИИ")
-
-    original_specialist = models.CharField(max_length=100, blank=True)
-    original_reasoning = models.TextField(blank=True)
-    original_priority = models.CharField(max_length=10, blank=True)
 
     doctor_comment = models.TextField(blank=True, verbose_name="Комментарий врача")
     raw_model_output = models.JSONField(default=dict, blank=True)
@@ -153,4 +175,4 @@ class CarePlan(models.Model):
         verbose_name_plural = "Планы обращения"
 
     def __str__(self):
-        return f"План для {self.study.patient.full_name} ({self.get_status_display()})"
+        return f"План для {self.study.patient.patient_code} ({self.get_status_display()})"

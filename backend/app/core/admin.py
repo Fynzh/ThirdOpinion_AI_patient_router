@@ -1,9 +1,12 @@
 from django.contrib import admin
-
-from django.contrib import admin
+from django import forms
 from .models import Patient, Study, Recommendation, CarePlan
 
-
+def get_patient_full_name(patient_code: str) -> str:
+    """Возвращает ФИО пациента из JSON-реестра. Если нет — возвращает код."""
+    from .patient_registry import get_personal_data
+    data = get_personal_data(patient_code) or {}
+    return data.get("full_name", patient_code)
 # ============================================
 # РЕКОМЕНДАЦИИ — показываем ВНУТРИ исследования
 # ============================================
@@ -16,16 +19,76 @@ class RecommendationInline(admin.TabularInline):
     )
     readonly_fields = ('source', 'confidence')
 
+# ============================================
+# ПАЦИЕНТ — анонимный в БД, персональные данные в JSON
+# ============================================
+class PatientAdminForm(forms.ModelForm):
+    """
+    Форма пациента. Включает виртуальные поля для персональных данных,
+    которые хранятся НЕ в БД, а в JSON-реестре.
+    """
+    full_name = forms.CharField(
+        required=False, label="ФИО",
+        widget=forms.TextInput(attrs={'style': 'width: 500px'}),
+    )
+    birth_date = forms.DateField(
+        required=False, label="Дата рождения",
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    phone = forms.CharField(required=False, label="Телефон")
+    email = forms.EmailField(required=False, label="Email")
 
-# ============================================
-# ПАЦИЕНТ
-# ============================================
+    class Meta:
+        model = Patient
+        fields = ['patient_code', 'age', 'sex']
+
+
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ('id', 'full_name', 'birth_date', 'phone', 'created_at')
-    search_fields = ('full_name', 'phone', 'email')
-    list_filter = ('birth_date',)
+    form = PatientAdminForm
+    list_display = ('patient_code', 'full_name_display', 'age', 'sex', 'created_at')
+    search_fields = ('patient_code',)
+    list_filter = ('sex',)
+    readonly_fields = ('patient_code', 'created_at')
     ordering = ('-created_at',)
+
+    fieldsets = (
+        ('Анонимные данные (в БД)', {
+            'fields': ('patient_code', 'age', 'sex'),
+            'description': 'Эти поля хранятся в основной БД. Персональных данных тут нет.',
+        }),
+        ('Персональные данные (JSON-реестр)', {
+            'fields': ('full_name', 'birth_date', 'phone', 'email'),
+            'description': (
+                'Эти поля хранятся ОТДЕЛЬНО от БД, в файле patient_registry.json. '
+                'В основную БД они не попадают. Никто, кроме врача, их не видит.'
+            ),
+        }),
+    )
+    @admin.display(description="ФИО")
+    def full_name_display(self, obj):
+        return get_patient_full_name(obj.patient_code)
+    def get_form(self, request, obj=None, **kwargs):
+        form = super().get_form(request, obj, **kwargs)
+        if obj:
+            from .patient_registry import get_personal_data
+            data = get_personal_data(obj.patient_code) or {}
+            for field in ['full_name', 'birth_date', 'phone', 'email']:
+                if field in data and field in form.base_fields:
+                    form.base_fields[field].initial = data[field]
+        return form
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        from .patient_registry import set_personal_data
+        personal = {}
+        for field in ['full_name', 'birth_date', 'phone', 'email']:
+            value = form.cleaned_data.get(field)
+            if value:
+                personal[field] = value.isoformat() if hasattr(value, 'isoformat') else value
+        if personal:
+            set_personal_data(obj.patient_code, personal)
+
 
 
 # ============================================
@@ -34,11 +97,11 @@ class PatientAdmin(admin.ModelAdmin):
 @admin.register(Study)
 class StudyAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'patient', 'modality', 'study_date',
-        'status', 'created_at'
+        'id', 'patient_code_display', 'patient_full_name_display',
+        'modality', 'study_date', 'status', 'created_at'
     )
     list_filter = ('modality', 'status', 'study_date')
-    search_fields = ('patient__full_name', 'radiologist_conclusion')
+    search_fields = ('patient__patient_code', 'radiologist_conclusion')
     inlines = [RecommendationInline]  # ← рекомендации внутри карточки
     ordering = ('-created_at',)
     actions = ['run_ai_analysis']
@@ -59,6 +122,31 @@ class StudyAdmin(admin.ModelAdmin):
         }),
     )
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        """Подменяет выпадающий список для поля 'patient' — показывает ФИО."""
+        field = super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == "patient" and field is not None:
+            field.label_from_instance = self._patient_label
+        return field
+
+    @staticmethod
+    def _patient_label(obj):
+        """Что показывать в выпадающем списке для пациента."""
+        from .patient_registry import get_personal_data
+        data = get_personal_data(obj.patient_code) or {}
+        full_name = data.get("full_name")
+        if full_name:
+            return f"{full_name} ({obj.patient_code})"
+        return obj.patient_code
+
+    @admin.display(description="Код пациента")
+    def patient_code_display(self, obj):
+        return obj.patient.patient_code
+
+    @admin.display(description="ФИО пациента")
+    def patient_full_name_display(self, obj):
+        return get_patient_full_name(obj.patient.patient_code)
+
     def run_ai_analysis(self, request, queryset):
         """Action: запустить ИИ-анализ для выбранных исследований."""
         from nlp_module.analyzer import (
@@ -76,6 +164,8 @@ class StudyAdmin(admin.ModelAdmin):
                 result = generate_recommendations(
                     radiologist_conclusion=study.radiologist_conclusion,
                     call_llm=call_llm,
+                    patient_age=study.patient.age,
+                    patient_sex=study.patient.sex,
                 )
             except RecommendationError:
                 errors += 1
@@ -109,8 +199,6 @@ class StudyAdmin(admin.ModelAdmin):
             f"✅ ИИ обработал: {ok}. Ошибок: {errors}."
         )
 
-    run_ai_analysis.short_description = "🧠 Запустить ИИ-анализ"
-
     run_ai_analysis.short_description = "Запустить ИИ-анализ"
 
 # ============================================
@@ -119,17 +207,41 @@ class StudyAdmin(admin.ModelAdmin):
 @admin.register(Recommendation)
 class RecommendationAdmin(admin.ModelAdmin):
     list_display = (
-        'id', 'study', 'specialist', 'source',
-        'priority', 'status', 'confidence'
+        'id', 'study', 'patient_full_name_display',
+        'specialist', 'source', 'priority', 'status', 'confidence'
     )
     list_filter = ('source', 'status', 'priority')
     search_fields = ('specialist', 'reasoning')
-    readonly_fields = (
-        'original_specialist', 'original_reasoning', 'original_priority',
-        'raw_model_output', 'created_at'
-    )
+    readonly_fields = ('raw_model_output', 'created_at', 'study_conclusion_display')
     ordering = ('-created_at',)
 
+    fieldsets = (
+        ('Основное', {
+            'fields': (
+                'study', 'source', 'status',
+                'specialist', 'specialty_code',
+                'reasoning', 'priority', 'confidence',
+            ),
+        }),
+        ('Заключение рентгенолога', {
+            'fields': ('study_conclusion_display',),
+            'description': (
+                'Оригинальный текст заключения. Сверяйте рекомендации ИИ '
+                'с фактическим содержанием исследования.'
+            ),
+        }),
+        ('Заключение врача', {
+            'fields': ('doctor_comment', 'reviewed_by', 'reviewed_at'),
+        }),
+    )
+
+    @admin.display(description="ФИО пациента")
+    def patient_full_name_display(self, obj):
+        return get_patient_full_name(obj.study.patient.patient_code)
+
+    @admin.display(description="Заключение рентгенолога")
+    def study_conclusion_display(self, obj):
+        return obj.study.radiologist_conclusion
 
 # ============================================
 # ПЛАН ОБРАЩЕНИЯ
