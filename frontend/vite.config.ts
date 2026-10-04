@@ -14,6 +14,7 @@ export default defineConfig({
     // В режиме разработки (npm run dev) запросы /api/... уходят на Django
     proxy: {
       '/api': 'http://localhost:8000',
+      '/media': 'http://localhost:8000',
     },
   },
 })

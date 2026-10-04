@@ -4,7 +4,6 @@ import type {
   GenerateRecommendationsResponse,
   Recommendation,
 } from '@/types/recommendation';
-import type { CarePlan, FinalizePlanPayload } from '@/types/care-plan';
 import { USE_MOCK, delay, getJson, postJson, unwrapList } from './http';
 
 const MOCK_STUDIES: StudyListItem[] = [
@@ -47,6 +46,3 @@ export const generateRecommendations = (studyId: number) =>
 
 export const addDoctorRecommendation = (studyId: number, payload: AddDoctorRecommendationPayload) =>
   postJson<Recommendation>(`/api/studies/${studyId}/add-recommendation/`, payload);
-
-export const finalizePlan = (studyId: number, payload: FinalizePlanPayload = {}) =>
-  postJson<CarePlan>(`/api/studies/${studyId}/finalize/`, payload);

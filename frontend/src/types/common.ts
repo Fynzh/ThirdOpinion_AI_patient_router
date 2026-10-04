@@ -13,8 +13,7 @@ export type ApiErrorCode =
   | 'RECOMMENDATION_NOT_FOUND'
   | 'VALIDATION_ERROR'
   | 'NLP_PARSE_ERROR'
-  | 'NLP_ERROR'
-  | 'NO_APPROVED_RECOMMENDATIONS';
+  | 'NLP_ERROR';
 
 export interface ApiErrorBody {
   error: string;

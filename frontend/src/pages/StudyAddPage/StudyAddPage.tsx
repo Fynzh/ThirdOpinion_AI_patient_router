@@ -1,9 +1,9 @@
 import { useState } from "react";
 import PatientSelect from "@/components/PatientSelect/PatientSelect";
 import { usePatients } from "@/hooks/usePatients";
-import s from "./PatientAddPage.module.css";
+import s from "./StudyAddPage.module.css";
 
-export default function PatientAddPage() {
+export default function StudyAddPage() {
   const { patients, isLoading, error } = usePatients();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
@@ -20,7 +20,7 @@ export default function PatientAddPage() {
 
   return (
     <>
-      <h1 className={s.title}>Добавление пациентов</h1>
+      <h1 className={s.title}>Новое исследование</h1>
 
       {error && <p role="alert">{error.message}</p>}
 
