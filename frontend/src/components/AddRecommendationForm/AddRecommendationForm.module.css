@@ -1,0 +1,38 @@
+.card {
+  background: #2a2d33;
+  border: 1px solid #3a3d44;
+  border-left: 4px solid #9aa0a9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.approved { border-left-color: #3ddc97; }
+.rejected { border-left-color: #ff5c8a; opacity: 0.7; }
+.pending { border-left-color: #f5c542; }
+
+.head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; }
+.badge { padding: 2px 8px; border-radius: 10px; background: #3a3d44; }
+.high { background: #ff5c8a; color: #15171a; }
+.medium { background: #f5c542; color: #15171a; }
+.low { background: #3ddc97; color: #15171a; }
+.status { margin-left: auto; color: #9aa0a9; }
+.muted { color: #9aa0a9; }
+
+.title { margin: 12px 0 4px; font-size: 16px; }
+.text { margin: 0 0 12px; color: #d5d8dd; line-height: 1.5; white-space: pre-wrap; }
+
+.form { display: grid; gap: 8px; margin-top: 12px; }
+.form input,
+.form textarea,
+.form select {
+  background: #15171a; color: #fff; border: 1px solid #3a3d44;
+  border-radius: 6px; padding: 8px; font: inherit;
+}
+
+.actions { display: flex; gap: 8px; }
+.actions button {
+  background: #3a3d44; color: #fff; border: 0; border-radius: 6px;
+  padding: 6px 12px; font: inherit; cursor: pointer;
+}
+.actions button:hover:not(:disabled) { background: #2fa8ff; }
+.actions button:disabled { opacity: 0.4; cursor: not-allowed; }

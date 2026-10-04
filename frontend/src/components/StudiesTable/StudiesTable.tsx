@@ -47,7 +47,7 @@ export default function StudiesTable({ studies, isEditing, selectedIds, onToggle
                 className={isEditing ? undefined : s.clickable}
                 onClick={() => {
                   if (isEditing) return;
-                  navigate(`/patient/view?id=${st.id}`);
+                  navigate(`/studies/view?id=${st.id}`);
                 }}
               >  
                 {isEditing && (

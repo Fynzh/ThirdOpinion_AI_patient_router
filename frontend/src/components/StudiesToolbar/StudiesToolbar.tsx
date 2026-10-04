@@ -31,7 +31,7 @@ export default function StudiesToolbar({ isEditing, onToggleEditing }: StudiesTo
             Отменить изменения
             </button>}
         </span>
-        <button type='button' className={`${s.button} ${s.upload}`} onClick={() => navigate('/patient/add')}>Новый пациент</button>
+        <button type='button' className={`${s.button} ${s.upload}`} onClick={() => navigate('/study/add')}>Новый пациент</button>
     </div>
   );
 }
