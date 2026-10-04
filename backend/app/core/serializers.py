@@ -77,6 +77,7 @@ class StudyListSerializer(serializers.ModelSerializer):
     patient_code = serializers.CharField(
         source='patient.patient_code', read_only=True
     )
+    display_title = serializers.CharField(read_only=True)
     patient_full_name = serializers.SerializerMethodField()
 
     def get_patient_full_name(self, obj):
@@ -100,9 +101,12 @@ class StudyListSerializer(serializers.ModelSerializer):
             'patient',
             'patient_code',
             'patient_full_name',
+            'display_title',
+            'title',
             'modality',
             'modality_display',
             'study_date',
+            'slices_count',
             'status',
             'status_display',
             'recommendations_count',

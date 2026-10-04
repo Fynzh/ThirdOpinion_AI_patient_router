@@ -98,10 +98,13 @@ class PatientAdmin(admin.ModelAdmin):
 class StudyAdmin(admin.ModelAdmin):
     list_display = (
         'id', 'patient_code_display', 'patient_full_name_display',
-        'modality', 'study_date', 'status', 'created_at'
+        'display_title_short', 'modality', 'study_date',
+        'slices_count', 'status', 'created_at',
     )
     list_filter = ('modality', 'status', 'study_date')
-    search_fields = ('patient__patient_code', 'radiologist_conclusion')
+    search_fields = (
+        'patient__patient_code', 'title', 'radiologist_conclusion',
+    )
     inlines = [RecommendationInline]  # ← рекомендации внутри карточки
     ordering = ('-created_at',)
     actions = ['run_ai_analysis']
@@ -112,7 +115,12 @@ class StudyAdmin(admin.ModelAdmin):
             'fields': ('patient',)
         }),
         ('Исследование', {
-            'fields': ('modality', 'study_date', 'file')
+            'fields': ('modality', 'title', 'study_date', 'slices_count', 'file'),
+            'description': (
+                'Название — краткая суть («Очаг в легком», «Коронарный кальциноз»). '
+                'Если не указать — система возьмёт первую строку заключения. '
+                'Срезы — только для КТ/МРТ.'
+            ),
         }),
         ('Заключение платформы «Третье Мнение»', {
             'fields': ('radiologist_conclusion',),
@@ -129,6 +137,12 @@ class StudyAdmin(admin.ModelAdmin):
             ),
         }),
     )
+
+    @admin.display(description="Название", ordering="title")
+    def display_title_short(self, obj):
+        """Обрезанное название для колонки списка."""
+        text = obj.display_title
+        return text[:50] + ("…" if len(text) > 50 else "")
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """Подменяет выпадающий список для поля 'patient' — показывает ФИО."""
