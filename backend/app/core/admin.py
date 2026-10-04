@@ -114,7 +114,7 @@ class StudyAdmin(admin.ModelAdmin):
         ('Исследование', {
             'fields': ('modality', 'study_date', 'file')
         }),
-        ('Заключение рентгенолога', {
+        ('Заключение платформы «Третье Мнение»', {
             'fields': ('radiologist_conclusion',),
             'description': 'Этот текст пойдёт в NLP-модель для анализа'
         }),
@@ -245,11 +245,11 @@ class RecommendationAdmin(admin.ModelAdmin):
                 'rejected — отклонена кнопкой.'
             ),
         }),
-        ('Заключение рентгенолога (для сверки)', {
+        ('Заключение платформы «Третье Мнение» (для сверки)', {
             'fields': ('study_conclusion_display',),
             'description': (
-                'Оригинальный текст заключения. Сверяйте рекомендации ИИ '
-                'с фактическим содержанием исследования.'
+                'Оригинальный текст заключения платформы. Сверяйте '
+                'рекомендации ИИ с фактическим содержанием исследования.'
             ),
         }),
         ('Заключение врача', {
@@ -269,7 +269,7 @@ class RecommendationAdmin(admin.ModelAdmin):
     def patient_full_name_display(self, obj):
         return get_patient_full_name(obj.study.patient.patient_code)
 
-    @admin.display(description="Заключение рентгенолога")
+    @admin.display(description='Заключение платформы «Третье Мнение»')
     def study_conclusion_display(self, obj):
         return obj.study.radiologist_conclusion
 
@@ -469,7 +469,7 @@ class CarePlanAdmin(admin.ModelAdmin):
             f"Email: {data.get('email', '—')}"
         )
 
-    @admin.display(description="Заключение рентгенолога")
+    @admin.display(description='Заключение платформы «Третье Мнение»')
     def study_conclusion_display(self, obj):
         return obj.study.radiologist_conclusion
 
