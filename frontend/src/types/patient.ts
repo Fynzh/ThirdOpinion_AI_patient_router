@@ -1,3 +1,5 @@
+import type { ISODate } from './common';
+
 export type Sex = 'M' | 'F';
 
 export const SEX_LABELS: Record<Sex, string> = { M: 'Мужской', F: 'Женский' };
@@ -9,7 +11,7 @@ export interface Patient {
   age: number;
   sex: Sex;
   full_name: string;  // '' если пациента нет в реестре
-  birth_date: string; // '' если нет в реестре; формат берётся из JSON-реестра
+  birth_date: ISODate | ''; // '' если нет в реестре; формат берётся из JSON-реестра
   phone: string;
   email: string;
 }
