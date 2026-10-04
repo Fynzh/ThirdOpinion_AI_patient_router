@@ -70,19 +70,12 @@ class RecommendationSerializer(serializers.ModelSerializer):
 # 3. ИССЛЕДОВАНИЕ — ДЛЯ СПИСКА (кратко)
 # ============================================
 class StudyListSerializer(serializers.ModelSerializer):
-    """
-    Облегчённый переводчик для СПИСКА исследований.
-    Никаких рекомендаций и заключения — только для таблицы.
-    """
+    """Облегчённый переводчик для СПИСКА исследований."""
     patient_code = serializers.CharField(
         source='patient.patient_code', read_only=True
     )
     patient_full_name = serializers.SerializerMethodField()
-
-    def get_patient_full_name(self, obj):
-        from .patient_registry import get_personal_data
-        data = get_personal_data(obj.patient.patient_code) or {}
-        return data.get('full_name', obj.patient.patient_code)
+    display_title = serializers.CharField(read_only=True)
     modality_display = serializers.CharField(
         source='get_modality_display', read_only=True
     )
@@ -92,34 +85,32 @@ class StudyListSerializer(serializers.ModelSerializer):
     recommendations_count = serializers.IntegerField(
         source='recommendations.count', read_only=True
     )
+    # ↓ НОВОЕ ↓
+    has_draft_plan = serializers.SerializerMethodField()
+    has_sent_plan = serializers.SerializerMethodField()
 
     class Meta:
         model = Study
         fields = (
-            'id',
-            'patient',
-            'patient_code',
-            'patient_full_name',
-            'modality',
-            'modality_display',
-            'study_date',
-            'status',
-            'status_display',
-            'recommendations_count',
-            'created_at',
+            'id', 'patient', 'patient_code', 'patient_full_name',
+            'display_title', 'title', 'modality', 'modality_display',
+            'study_date', 'slices_count', 'status', 'status_display',
+            'recommendations_count', 'created_at',
         )
+
+    def get_patient_full_name(self, obj):
+        from .patient_registry import get_personal_data
+        data = get_personal_data(obj.patient.patient_code) or {}
+        return data.get('full_name', obj.patient.patient_code)
 
 
 # ============================================
 # 4. ИССЛЕДОВАНИЕ — ДЛЯ КАРТОЧКИ (подробно)
 # ============================================
 class StudyDetailSerializer(serializers.ModelSerializer):
-    """
-    Полный переводчик для ОДНОГО исследования.
-    Включает пациента (анонимно) и все рекомендации.
-    """
     patient = PatientSerializer(read_only=True)
     recommendations = RecommendationSerializer(many=True, read_only=True)
+    care_plan = serializers.SerializerMethodField()
     modality_display = serializers.CharField(
         source='get_modality_display', read_only=True
     )
@@ -131,12 +122,26 @@ class StudyDetailSerializer(serializers.ModelSerializer):
         model = Study
         fields = '__all__'
 
+    def get_care_plan(self, obj):
+        """
+        Возвращает актуальный план обращения:
+        - draft-план, если он есть (врач с ним работает);
+        - иначе последний sent-план (для просмотра);
+        - иначе None.
+        """
+        plan = obj.care_plans.filter(status='draft').first()
+        if plan is None:
+            plan = obj.care_plans.filter(status='sent').order_by('-sent_at').first()
+        if plan is None:
+            return None
+        return CarePlanSerializer(plan).data
+
 
 # ============================================
 # 5. ПЛАН ОБРАЩЕНИЯ
 # ============================================
 class CarePlanSerializer(serializers.ModelSerializer):
-    """Переводчик для финального плана."""
+    """Переводчик для плана обращения."""
     status_display = serializers.CharField(
         source='get_status_display', read_only=True
     )
@@ -145,8 +150,52 @@ class CarePlanSerializer(serializers.ModelSerializer):
         model = CarePlan
         fields = '__all__'
         read_only_fields = (
+            'study',
             'recommendations_snapshot',
+            'status',
             'created_at',
-            'approved_at',
+            'updated_at',
             'sent_at',
         )
+
+class StudyCreateUpdateSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для создания и редактирования исследования.
+    Поддерживает загрузку файла через multipart/form-data.
+    """
+    class Meta:
+        model = Study
+        fields = (
+            'id',
+            'patient',
+            'modality',
+            'title',
+            'study_date',
+            'slices_count',
+            'radiologist_conclusion',
+            'file',
+            'status',
+        )
+        read_only_fields = ('status',)   # статус меняется автоматически
+
+
+class PatientCreateSerializer(serializers.Serializer):
+    """
+                Сериализатор для создания пациента.
+                Принимает и анонимные поля, и персональные (пойдут в JSON-реестр).
+                """
+    age = serializers.IntegerField(min_value=0, max_value=150)
+    sex = serializers.ChoiceField(choices=['M', 'F'])
+    full_name = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    birth_date = serializers.DateField(required=False, allow_null=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+
+class PatientUpdateSerializer(serializers.Serializer):
+    """Частичное обновление пациента."""
+    age = serializers.IntegerField(min_value=0, max_value=150, required=False)
+    sex = serializers.ChoiceField(choices=['M', 'F'], required=False)
+    full_name = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    birth_date = serializers.DateField(required=False, allow_null=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)

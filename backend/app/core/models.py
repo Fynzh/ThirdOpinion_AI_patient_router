@@ -65,6 +65,19 @@ class Study(models.Model):
         Patient, on_delete=models.CASCADE, related_name='studies',
         verbose_name="Пациент"
     )
+
+    title = models.CharField(
+        max_length=200, blank=True,
+        verbose_name="Название исследования",
+        help_text='Краткое название для списка. Например: "Очаг в легком", "Коронарный кальциноз". '
+                  'Если пусто — берётся первая строка заключения.'
+    )
+    slices_count = models.PositiveIntegerField(
+        null=True, blank=True,
+        verbose_name="Количество срезов",
+        help_text="Для КТ и МРТ — количество срезов в серии. Оставьте пустым, если неизвестно."
+    )
+
     modality = models.CharField(
         max_length=20, choices=MODALITY_CHOICES, verbose_name="Тип исследования"
     )
@@ -89,6 +102,17 @@ class Study(models.Model):
 
     def __str__(self):
         return f"{self.get_modality_display()} — {self.patient.patient_code} ({self.study_date})"
+
+    @property
+    def display_title(self) -> str:
+        """
+        Название для списков. Если `title` не задан — берёт первую строку
+        заключения, обрезанную до 60 символов.
+        """
+        if self.title:
+            return self.title
+        first_line = (self.radiologist_conclusion or "").strip().split("\n")[0]
+        return first_line[:60] + ("…" if len(first_line) > 60 else "")
 
 class Recommendation(models.Model):
     SOURCE_CHOICES = [
