@@ -4,7 +4,7 @@ import { formatDateTime, formatDate } from '@/utils/formatDateTime';
 import s from './StudiesTable.module.css';
 
 const STATUS_DOT: Record<StudyStatus, string> = {
-  new: s.grey,
+  processing: s.grey,
   ai_done: s.blue,
   in_review: s.yellow,
   approved: s.green,

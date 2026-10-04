@@ -24,5 +24,7 @@ export async function fetchPatients(): Promise<PatientSummary[]> {
       full_name: st.patient_full_name,
     });
   }
-  return [...unique.values()];
+  return [...unique.values()].sort((a, b) =>
+  (a.full_name || a.patient_code).localeCompare(b.full_name || b.patient_code, 'ru'),
+);
 }

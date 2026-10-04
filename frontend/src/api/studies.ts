@@ -1,5 +1,11 @@
-import type { StudyListItem } from '@/types/study';
-import { USE_MOCK, delay, getJson, unwrapList } from './http';
+import type { StudyDetail, StudyListItem } from '@/types/study';
+import type {
+  AddDoctorRecommendationPayload,
+  GenerateRecommendationsResponse,
+  Recommendation,
+} from '@/types/recommendation';
+import type { CarePlan, FinalizePlanPayload } from '@/types/care-plan';
+import { USE_MOCK, delay, getJson, postJson, unwrapList } from './http';
 
 const MOCK_STUDIES: StudyListItem[] = [
   {
@@ -17,7 +23,7 @@ const MOCK_STUDIES: StudyListItem[] = [
   {
     id: 3, patient: 3, patient_code: 'PAT-2026-C1E4F0', patient_full_name: 'PAT-2026-C1E4F0',
     modality: 'FLG', modality_display: 'ФЛГ',
-    study_date: '2023-08-02', status: 'new', status_display: 'Новое — ждёт обработки ИИ',
+    study_date: '2023-08-02', status: 'processing', status_display: 'ИИ обрабатывает',
     recommendations_count: 0, created_at: '2026-05-21T14:40:00Z',
   },
 ];
@@ -29,3 +35,18 @@ export async function fetchStudies(): Promise<StudyListItem[]> {
   }
   return unwrapList(await getJson<StudyListItem[]>('/api/studies/'));
 }
+
+// Функции ниже мок-веток не имеют и всегда обращаются к серверу
+
+export const fetchStudy = (id: number) =>
+  getJson<StudyDetail>(`/api/studies/${id}/`);
+
+/** Повторный запуск ИИ (для нового исследования он стартует сам) */
+export const generateRecommendations = (studyId: number) =>
+  postJson<GenerateRecommendationsResponse>(`/api/studies/${studyId}/generate/`);
+
+export const addDoctorRecommendation = (studyId: number, payload: AddDoctorRecommendationPayload) =>
+  postJson<Recommendation>(`/api/studies/${studyId}/add-recommendation/`, payload);
+
+export const finalizePlan = (studyId: number, payload: FinalizePlanPayload = {}) =>
+  postJson<CarePlan>(`/api/studies/${studyId}/finalize/`, payload);

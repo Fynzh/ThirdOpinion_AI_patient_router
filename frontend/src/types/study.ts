@@ -11,7 +11,7 @@ export const MODALITY_LABELS = {
 } as const;
 
 export const STUDY_STATUS_LABELS = {
-  new: "Новое — ждёт обработки ИИ",
+  processing: "Новое — ждёт обработки ИИ",
   ai_done: "ИИ обработал — ждёт врача",
   in_review: "Врач проверяет",
   approved: "План утверждён",

@@ -20,3 +20,7 @@ export interface CarePlan {
   approved_at: ISODateTime | null;
   sent_at: ISODateTime | null;
 }
+
+export interface FinalizePlanPayload {
+  doctor_comment?: string;
+}

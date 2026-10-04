@@ -36,7 +36,32 @@ export interface Recommendation {
   created_at: ISODateTime;
 }
 
-/** Что врач может менять при проверке (PATCH) */
-export type RecommendationReviewPayload = Partial<
-  Pick<Recommendation, 'status' | 'specialist' | 'reasoning' | 'priority' | 'doctor_comment'>
->;
+/** PATCH /api/recommendations/{id}/edit/ */
+export interface EditRecommendationPayload {
+  specialist?: string;
+  reasoning?: string;
+  priority?: Priority;
+  doctor_comment?: string;
+}
+
+/** POST /api/recommendations/{id}/approve/ и /reject/ */
+export interface RecommendationDecisionPayload {
+  doctor_comment?: string;
+}
+
+import type { StudyStatus } from './study';
+
+export interface AddDoctorRecommendationPayload {
+  specialist: string; // обязательны, иначе 400 VALIDATION_ERROR
+  reasoning: string;
+  priority?: Priority;
+  doctor_comment?: string;
+}
+
+export interface GenerateRecommendationsResponse {
+  study_id: number;
+  status: StudyStatus;
+  ai_status: 'findings' | 'no_findings';
+  recommendations: Recommendation[];
+  summary: string;
+}
