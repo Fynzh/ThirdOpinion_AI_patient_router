@@ -114,7 +114,7 @@ class StudyAdmin(admin.ModelAdmin):
         ('Исследование', {
             'fields': ('modality', 'study_date', 'file')
         }),
-        ('Заключение рентгенолога', {
+        ('Заключение платформы «Третье Мнение»', {
             'fields': ('radiologist_conclusion',),
             'description': 'Этот текст пойдёт в NLP-модель для анализа'
         }),
@@ -222,7 +222,7 @@ class RecommendationAdmin(admin.ModelAdmin):
     list_filter = ('source', 'status', 'priority')
     search_fields = ('specialist', 'reasoning')
     readonly_fields = (
-        'source', 'status',
+        'source', 'status', 'reviewed_by_display',
         'raw_model_output', 'created_at', 'study_conclusion_display',
     )
     ordering = ('-created_at',)
@@ -245,24 +245,31 @@ class RecommendationAdmin(admin.ModelAdmin):
                 'rejected — отклонена кнопкой.'
             ),
         }),
-        ('Заключение рентгенолога (для сверки)', {
+        ('Заключение платформы «Третье Мнение» (для сверки)', {
             'fields': ('study_conclusion_display',),
             'description': (
-                'Оригинальный текст заключения. Сверяйте рекомендации ИИ '
-                'с фактическим содержанием исследования.'
+                'Оригинальный текст заключения платформы. Сверяйте '
+                'рекомендации ИИ с фактическим содержанием исследования.'
             ),
         }),
         ('Заключение врача', {
-            'fields': ('reviewed_by', 'reviewed_at'),
+            'fields': ('reviewed_by_display', 'reviewed_at'),
             'description': 'Правки вносите в поле «Обоснование» выше.',
         }),
     )
+
+    @admin.display(description="Проверил")
+    def reviewed_by_display(self, obj):
+        """Показывает логин врача, который проверил рекомендацию. Только чтение."""
+        if obj.reviewed_by:
+            return obj.reviewed_by.username
+        return "— (ещё не проверено)"
 
     @admin.display(description="ФИО пациента")
     def patient_full_name_display(self, obj):
         return get_patient_full_name(obj.study.patient.patient_code)
 
-    @admin.display(description="Заключение рентгенолога")
+    @admin.display(description='Заключение платформы «Третье Мнение»')
     def study_conclusion_display(self, obj):
         return obj.study.radiologist_conclusion
 
@@ -462,7 +469,7 @@ class CarePlanAdmin(admin.ModelAdmin):
             f"Email: {data.get('email', '—')}"
         )
 
-    @admin.display(description="Заключение рентгенолога")
+    @admin.display(description='Заключение платформы «Третье Мнение»')
     def study_conclusion_display(self, obj):
         return obj.study.radiologist_conclusion
 

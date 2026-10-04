@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 from pathlib import Path
 from corsheaders.defaults import default_headers
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -128,12 +130,40 @@ STATIC_URL = 'static/'
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
+# Загружаем переменные из .env
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
+load_dotenv()
+
+# Читаем креды напрямую из окружения
+_EMAIL_USER = os.getenv("EMAIL_HOST_USER")
+_EMAIL_PASS = os.getenv("EMAIL_HOST_PASSWORD")
+
+# Если креды заданы — реальная отправка через Gmail.
+# Если нет — печатаем письмо в консоль.
+if _EMAIL_USER and _EMAIL_PASS:
+    MAILERS = {
+        "default": {
+            "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+            "OPTIONS": {
+                "host": "smtp.gmail.com",
+                "port": 587,
+                "username": _EMAIL_USER,
+                "password": _EMAIL_PASS,
+                "use_tls": True,
+            },
+        },
+    }
+    DEFAULT_FROM_EMAIL = _EMAIL_USER
+else:
+    # Fallback — без кредов пишем в консоль
+    MAILERS = {
+        "default": {
+            "BACKEND": "django.core.mail.backends.console.EmailBackend",
+        },
+    }
+    DEFAULT_FROM_EMAIL = "noreply@thirdopinion.demo"
+
+CLINIC_PHONE = "+70000000000"
 
 # ============================================
 # НАСТРОЙКИ ДЛЯ API И ФРОНТЕНДА
@@ -160,16 +190,7 @@ REST_FRAMEWORK = {
 # EMAIL (заглушка для хакатона)
 # ============================================
 # Новый формат Django 6.1. Письма печатаются в консоль.
-MAILERS = {
-    "default": {
-        "BACKEND": "django.core.mail.backends.dummy.EmailBackend",
-    },
-}
 
-DEFAULT_FROM_EMAIL = "noreply@thirdopinion.demo"
-
-# Телефон клиники (заглушка) — для кнопки "Записаться"
-CLINIC_PHONE = "+70000000000"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"

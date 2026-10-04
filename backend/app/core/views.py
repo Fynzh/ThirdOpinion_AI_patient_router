@@ -32,7 +32,7 @@ class StudyDetailView(RetrieveAPIView):
 class GenerateRecommendationsView(APIView):
     """
     POST /api/studies/{id}/generate/
-    Запускает NLP-анализ заключения рентгенолога.
+    Запускает NLP-анализ заключения платформы «Третье Мнение».
     """
     def post(self, request, pk):
         try:

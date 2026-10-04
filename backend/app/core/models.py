@@ -70,8 +70,8 @@ class Study(models.Model):
     )
     study_date = models.DateField(verbose_name="Дата исследования")
     radiologist_conclusion = models.TextField(
-        verbose_name="Заключение рентгенолога",
-        help_text="Текст, который написал врач-рентгенолог"
+        verbose_name='Заключение платформы «Третье Мнение»',
+        help_text='Заключение, сформированное платформой «Третье Мнение»'
     )
     file = models.FileField(
         upload_to='studies/', blank=True, null=True, verbose_name="Файл"
