@@ -247,3 +247,142 @@ class AddDoctorRecommendationView(APIView):
             RecommendationSerializer(rec).data,
             status=status.HTTP_201_CREATED,
         )
+
+# ============================================
+# 7. РЕДАКТИРОВАТЬ КОММЕНТАРИЙ ВРАЧА В ПЛАНЕ
+# ============================================
+class UpdateCarePlanCommentView(APIView):
+    """
+    PATCH /api/studies/{id}/care-plan/
+    Body: {"doctor_comment": "..."}
+    Обновляет комментарий врача в DRAFT-плане исследования.
+    Если плана нет или он уже sent — 400.
+    """
+    def patch(self, request, pk):
+        # 1. Достаём исследование
+        try:
+            study = Study.objects.get(id=pk)
+        except Study.DoesNotExist:
+            return Response(
+                {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # 2. Ищем draft-план
+        plan = study.care_plans.filter(status='draft').first()
+        if plan is None:
+            # Может, есть sent — но его редактировать нельзя
+            sent_exists = study.care_plans.filter(status='sent').exists()
+            if sent_exists:
+                return Response(
+                    {
+                        "error": "План уже отправлен пациенту. Правки невозможны.",
+                        "code": "PLAN_ALREADY_SENT",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            return Response(
+                {
+                    "error": "Черновик плана ещё не создан. "
+                             "Одобрьте хотя бы одну рекомендацию.",
+                    "code": "NO_DRAFT_PLAN",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 3. Обновляем только doctor_comment
+        if "doctor_comment" not in request.data:
+            return Response(
+                {
+                    "error": "Поле doctor_comment обязательно",
+                    "code": "VALIDATION_ERROR",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        plan.doctor_comment = request.data.get("doctor_comment", "")
+        plan.save(update_fields=["doctor_comment", "updated_at"])
+
+        return Response(CarePlanSerializer(plan).data)
+
+
+# ============================================
+# 8. ОТПРАВИТЬ ПЛАН ПАЦИЕНТУ
+# ============================================
+class SendCarePlanView(APIView):
+    """
+    POST /api/studies/{id}/send/
+    Отправляет план пациенту на email.
+    Работает только с DRAFT-планом.
+    """
+    def post(self, request, pk):
+        # 1. Достаём исследование
+        try:
+            study = Study.objects.get(id=pk)
+        except Study.DoesNotExist:
+            return Response(
+                {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # 2. Ищем draft-план
+        plan = study.care_plans.filter(status='draft').first()
+        if plan is None:
+            sent_exists = study.care_plans.filter(status='sent').exists()
+            if sent_exists:
+                return Response(
+                    {
+                        "error": "План уже был отправлен ранее.",
+                        "code": "PLAN_ALREADY_SENT",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            return Response(
+                {
+                    "error": "Нет черновика плана для отправки.",
+                    "code": "NO_DRAFT_PLAN",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 3. Проверяем, что есть email пациента
+        from .patient_registry import get_personal_data
+        personal = get_personal_data(study.patient.patient_code) or {}
+        if not personal.get("email"):
+            return Response(
+                {
+                    "error": "У пациента не указан email. "
+                             "Добавьте email в карточке пациента.",
+                    "code": "NO_PATIENT_EMAIL",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 4. Отправляем письмо
+        from .email_service import send_care_plan_email
+        try:
+            success = send_care_plan_email(plan)
+        except Exception as e:
+            return Response(
+                {"error": f"Ошибка отправки: {e}", "code": "EMAIL_SEND_ERROR"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if not success:
+            return Response(
+                {
+                    "error": "Не удалось отправить: email не найден в реестре.",
+                    "code": "NO_PATIENT_EMAIL",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # 5. Возвращаем обновлённый план
+        plan.refresh_from_db()
+        return Response(
+            {
+                "success": True,
+                "message": "План отправлен пациенту.",
+                "plan": CarePlanSerializer(plan).data,
+            }
+        )

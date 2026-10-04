@@ -7,6 +7,8 @@ from .views import (
     ApproveRecommendationView,
     RejectRecommendationView,
     AddDoctorRecommendationView,
+    UpdateCarePlanCommentView,
+    SendCarePlanView,
 )
 from .auth_views import RegisterView, LoginView, LogoutView, MeView
 
@@ -29,4 +31,8 @@ urlpatterns = [
          ApproveRecommendationView.as_view(), name="recommendation-approve"),
     path("recommendations/<int:pk>/reject/",
          RejectRecommendationView.as_view(), name="recommendation-reject"),
+    path("studies/<int:pk>/care-plan/",
+         UpdateCarePlanCommentView.as_view(), name="study-care-plan"),
+    path("studies/<int:pk>/send/",
+         SendCarePlanView.as_view(), name="study-send"),
 ]

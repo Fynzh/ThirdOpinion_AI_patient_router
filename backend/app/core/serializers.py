@@ -124,6 +124,7 @@ class StudyDetailSerializer(serializers.ModelSerializer):
     """
     patient = PatientSerializer(read_only=True)
     recommendations = RecommendationSerializer(many=True, read_only=True)
+    care_plan = serializers.SerializerMethodField()
     modality_display = serializers.CharField(
         source='get_modality_display', read_only=True
     )
@@ -140,7 +141,7 @@ class StudyDetailSerializer(serializers.ModelSerializer):
 # 5. ПЛАН ОБРАЩЕНИЯ
 # ============================================
 class CarePlanSerializer(serializers.ModelSerializer):
-    """Переводчик для финального плана."""
+    """Переводчик для плана обращения."""
     status_display = serializers.CharField(
         source='get_status_display', read_only=True
     )
@@ -149,8 +150,10 @@ class CarePlanSerializer(serializers.ModelSerializer):
         model = CarePlan
         fields = '__all__'
         read_only_fields = (
+            'study',
             'recommendations_snapshot',
+            'status',
             'created_at',
-            'approved_at',
+            'updated_at',
             'sent_at',
         )
