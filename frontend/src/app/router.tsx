@@ -19,13 +19,7 @@ export const router = createBrowserRouter([
       { index: true, loader: () => redirect('/studies') },
       { path: 'studies', element: <StudiesPage />},
       { path: 'studies/view', element: <StudyPage />},
-      {
-        path: 'study',
-        children: [
-          {index: true, loader: () => redirect('/studies')},
-          {path: 'add', element: <StudyAddPage />},
-        ],
-      },
+      { path: 'studies/add', element: <StudyAddPage/>},
       { path: 'profile', element: <ProfilePage /> },
       { path: '*', loader: () => redirect('/studies') },
     ],

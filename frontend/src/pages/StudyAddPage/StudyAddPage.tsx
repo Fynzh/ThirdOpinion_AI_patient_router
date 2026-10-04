@@ -69,6 +69,12 @@ export default function StudyAddPage() {
     try {
       const full = await fetchStudy(st.id);
       setConclusion(full.radiologist_conclusion);
+      setStudyDate(full.study_date.slice(0, 10));
+      const item = MODALITY_ITEMS.find((m) => m.key === full.modality);
+      if (item) {
+        setModalityId(item.id);
+        setShowTypeHint(false);
+      }
     } catch (err) {
       setSubmitError((err as Error).message);
     }

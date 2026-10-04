@@ -28,7 +28,7 @@ export default function AvailableStudies({ items, isLoading = false, onPick }: P
         selectedId={pickedId}
         isLoading={isLoading}
         placeholder="Подставить заключение из исследования"
-        getLabel={(st) => `${st.display_title || st.modality_display} · ${formatDate(st.study_date)}`}
+        getLabel={(st) => `${st.modality_display || st.display_title} от ${formatDate(st.study_date)}`}
         onSelect={handleSelect}
       />
     </div>

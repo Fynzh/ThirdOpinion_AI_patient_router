@@ -10,7 +10,6 @@ export default function Header() {
     <header className={s.header}>
       <Link to="/studies" className={s.logoLink} aria-label="На главную">
         <img src={logo} alt="" className={s.logo} />
-        <span className={s.logoLabel}>Cord <br/> доступа</span>
       </Link>
 
       <nav className={s.nav}>
