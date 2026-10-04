@@ -3,7 +3,6 @@ import MainLayout from '@/layouts/MainLayout/MainLayout';
 import StudiesPage from '@/pages/StudiesPage/StudiesPage';
 import ProfilePage from '@/pages/ProfilePage/ProfilePage';
 import StudyAddPage from '@/pages/StudyAddPage/StudyAddPage';
-import StudyViewPage from '@/pages/StudyViewPage/StudyViewPage';
 import StudyPage from '@/pages/StudyPage/StudyPage';
 
 export const router = createBrowserRouter([

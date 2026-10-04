@@ -13,9 +13,13 @@ export type ApiErrorCode =
   | 'RECOMMENDATION_NOT_FOUND'
   | 'VALIDATION_ERROR'
   | 'NLP_PARSE_ERROR'
-  | 'NLP_ERROR';
+  | 'NLP_ERROR'
+  | 'INVALID_CREDENTIALS'
+  | 'WEAK_PASSWORD'
+  | 'USER_EXISTS';
 
 export interface ApiErrorBody {
   error: string;
   code?: ApiErrorCode;
 }
+
