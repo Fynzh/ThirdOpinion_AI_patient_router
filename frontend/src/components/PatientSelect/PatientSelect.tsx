@@ -1,9 +1,9 @@
-import type { PatientAnonymized } from '@/types/patient';
-import { getPatientLabel } from '@/utils/patientLabel';
-import SelectBox from '@/components/SelectBox/SelectBox'; // Импортируем наш универсальный селект
+import type { PatientSummary } from "@/types/patient";
+import { getPatientLabel } from "@/utils/patientLabel";
+import SelectBox from "@/components/SelectBox/SelectBox"; // Импортируем наш универсальный селект
 
 interface PatientSelectProps {
-  patients: PatientAnonymized[];
+  patients: PatientSummary[];
   selectedId: number | null;
   isCreatingNew: boolean;
   isLoading?: boolean;
@@ -19,18 +19,17 @@ export default function PatientSelect({
   onSelect,
   onCreateNew,
 }: PatientSelectProps) {
-  
   return (
     <SelectBox
       items={patients}
       selectedId={selectedId}
       isLoading={isLoading}
-      placeholder={isCreatingNew ? 'Новый пациент' : 'Выберите пациента'}
-      getLabel={(p) => getPatientLabel(p.id, p.patient_code)} // Указываем, как читать имя
+      placeholder={isCreatingNew ? "Новый пациент" : "Выберите пациента"}
+      getLabel={getPatientLabel} // Указываем, как читать имя
       onSelect={onSelect}
       actionButton={{
-        label: 'Новый пациент',
-        icon: '+',
+        label: "Новый пациент",
+        icon: "+",
         onClick: onCreateNew,
       }}
     />

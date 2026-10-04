@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import type { StudyListItem, StudyStatus } from '@/types/study';
 import { formatDateTime, formatDate } from '@/utils/formatDateTime';
-import { getPatientLabel } from '@/utils/patientLabel';
 import s from './StudiesTable.module.css';
 
 const STATUS_DOT: Record<StudyStatus, string> = {
@@ -27,7 +26,7 @@ export default function StudiesTable({ studies, isEditing, selectedIds, onToggle
         <thead>
           <tr>
             {isEditing && <th aria-label="Выбор" />}
-            <th>Код пациента</th>
+            <th>Пациент</th>
             <th>Тип исследования</th>
             <th>Дата исследования</th>
             <th>Статус</th>
@@ -43,17 +42,28 @@ export default function StudiesTable({ studies, isEditing, selectedIds, onToggle
           )}
           {studies.map((st) => {
             return (
-              <tr key={st.id} onClick={() => navigate(`/patient/view?id=${st.id}`)}>
+              <tr
+                key={st.id}
+                className={isEditing ? undefined : s.clickable}
+                onClick={() => {
+                  if (isEditing) return;
+                  navigate(`/patient/view?id=${st.id}`);
+                }}
+              >  
                 {isEditing && (
                   <td>
                     <input
                       type="checkbox"
+                      className={s.checkbox}
                       checked={selectedIds.includes(st.id)}
                       onChange={() => onToggleSelect(st.id)}
                     />
                   </td>
                 )}
-                <td>{getPatientLabel(st.patient, st.patient_code)}</td>
+                <td>
+                  <span>{st.patient_full_name}</span>
+                  <div className={s.sub}>{st.patient_code}</div>
+                </td>
                 <td>{st.modality_display}</td>
                 <td>{formatDate(st.study_date)}</td>
                 <td>

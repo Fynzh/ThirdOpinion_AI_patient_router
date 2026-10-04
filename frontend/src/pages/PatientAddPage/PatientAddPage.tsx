@@ -1,7 +1,6 @@
 import { useState } from "react";
 import PatientSelect from "@/components/PatientSelect/PatientSelect";
 import { usePatients } from "@/hooks/usePatients";
-import { getPatientLabel } from "@/utils/patientLabel";
 import s from "./PatientAddPage.module.css";
 
 export default function PatientAddPage() {
@@ -36,7 +35,7 @@ export default function PatientAddPage() {
 
       {isCreatingNew && <div>Здесь будет модуль добавления пациента</div>}
       {selectedPatient && (
-        <p>{getPatientLabel(selectedPatient.id, selectedPatient.patient_code)}</p>
+        <p>{selectedPatient.full_name} ({selectedPatient.patient_code})</p>
       )}
     </>
   );

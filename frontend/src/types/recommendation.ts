@@ -28,9 +28,7 @@ export interface Recommendation {
   priority: Priority;
   priority_display: string;
   confidence: number | null;
-  original_specialist: string;
-  original_reasoning: string;
-  original_priority: Priority | '';
+  study_conclusion: string;
   doctor_comment: string;
   raw_model_output: Record<string, unknown>;
   reviewed_by: number | null;

@@ -1,21 +1,21 @@
-import type { ISODate, ISODateTime } from './common';
-import type { PatientAnonymized } from './patient';
-import type { Recommendation } from './recommendation';
+import type { ISODate, ISODateTime } from "./common";
+import type { Patient } from "./patient";
+import type { Recommendation } from "./recommendation";
 
 export const MODALITY_LABELS = {
-  CHEST_XRAY: 'Рентгенограмма грудной клетки',
-  FLG: 'ФЛГ',
-  CHEST_CT: 'КТ органов грудной клетки',
-  BRAIN_CT: 'КТ головного мозга',
-  MAMMO: 'Маммограмма',
+  CHEST_XRAY: "Рентгенограмма грудной клетки",
+  FLG: "ФЛГ",
+  CHEST_CT: "КТ органов грудной клетки",
+  BRAIN_CT: "КТ головного мозга",
+  MAMMO: "Маммограмма",
 } as const;
 
 export const STUDY_STATUS_LABELS = {
-  new: 'Новое — ждёт обработки ИИ',
-  ai_done: 'ИИ обработал — ждёт врача',
-  in_review: 'Врач проверяет',
-  approved: 'План утверждён',
-  sent: 'Отправлено пациенту',
+  new: "Новое — ждёт обработки ИИ",
+  ai_done: "ИИ обработал — ждёт врача",
+  in_review: "Врач проверяет",
+  approved: "План утверждён",
+  sent: "Отправлено пациенту",
 } as const;
 
 export type Modality = keyof typeof MODALITY_LABELS;
@@ -25,7 +25,8 @@ export type StudyStatus = keyof typeof STUDY_STATUS_LABELS;
 export interface StudyListItem {
   id: number;
   patient: number; // id пациента
-  patient_code: string | null;
+  patient_code: string;
+  patient_full_name: string;
   modality: Modality;
   modality_display: string;
   study_date: ISODate;
@@ -38,7 +39,7 @@ export interface StudyListItem {
 /** StudyDetailSerializer: карточка исследования */
 export interface StudyDetail {
   id: number;
-  patient: PatientAnonymized; // вложенный объект, в отличие от списка
+  patient: Patient; // вложенный объект, в отличие от списка
   modality: Modality;
   modality_display: string;
   study_date: ISODate;
