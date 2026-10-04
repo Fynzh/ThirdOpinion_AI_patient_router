@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
     'core',
     'rest_framework.authtoken',
 ]
@@ -147,6 +148,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
@@ -171,3 +173,17 @@ CLINIC_PHONE = "+70000000000"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+# ============================================
+# SWAGGER / OpenAPI
+# ============================================
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MedRoute API',
+    'DESCRIPTION': (
+        'Сервис формирования персонального плана дальнейшего обращения пациента '
+        'на основе ИИ-анализа заключений рентгенолога. '
+        'Кейс компании «Третье Мнение».'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
