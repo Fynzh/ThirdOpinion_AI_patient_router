@@ -7,7 +7,6 @@ from .views import (
     ApproveRecommendationView,
     RejectRecommendationView,
     AddDoctorRecommendationView,
-    FinalizePlanView,
 )
 
 urlpatterns = [
@@ -18,8 +17,6 @@ urlpatterns = [
          GenerateRecommendationsView.as_view(), name="study-generate"),
     path("studies/<int:pk>/add-recommendation/",
          AddDoctorRecommendationView.as_view(), name="study-add-rec"),
-    path("studies/<int:pk>/finalize/",
-         FinalizePlanView.as_view(), name="study-finalize"),
 
     path("recommendations/<int:pk>/edit/",
          EditRecommendationView.as_view(), name="recommendation-edit"),

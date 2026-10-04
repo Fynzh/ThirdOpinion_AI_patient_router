@@ -109,9 +109,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'ru-ru'
+TIME_ZONE = 'Europe/Moscow'
+DATETIME_FORMAT = "d.m.Y H:i"
+DATE_FORMAT = "d.m.Y"
 
 USE_I18N = True
 
@@ -153,3 +154,20 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ],
 }
+# ============================================
+# EMAIL (заглушка для хакатона)
+# ============================================
+# Новый формат Django 6.1. Письма печатаются в консоль.
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.dummy.EmailBackend",
+    },
+}
+
+DEFAULT_FROM_EMAIL = "noreply@thirdopinion.demo"
+
+# Телефон клиники (заглушка) — для кнопки "Записаться"
+CLINIC_PHONE = "+70000000000"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"

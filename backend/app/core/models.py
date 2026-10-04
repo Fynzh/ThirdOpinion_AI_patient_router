@@ -142,35 +142,55 @@ class Recommendation(models.Model):
         return f"[{self.get_source_display()}] {self.specialist} ({self.get_status_display()})"
 
 class CarePlan(models.Model):
+    """
+    План обращения. Создаётся АВТОМАТИЧЕСКИ, как только все рекомендации
+    по исследованию проверены (одобрены или отклонены).
+
+    Содержит snapshot одобренных рекомендаций + данные пациента + ссылку
+    на исследование. Отправляется пациенту по email.
+    """
     STATUS_CHOICES = [
         ('draft', 'Черновик'),
-        ('approved', 'Утверждён'),
-        ('sent', 'Отправлен пациенту'),
+        ('sent', 'Отправлено'),
     ]
 
     study = models.OneToOneField(
         Study, on_delete=models.CASCADE, related_name='care_plan',
         verbose_name="Исследование"
     )
-    approved_by = models.ForeignKey(
-        User, on_delete=models.SET_NULL, null=True,
-        verbose_name="Утвердил врач"
-    )
+
+    # Снимок одобренных рекомендаций на момент создания/обновления
+    # Формат: [{"specialist": "...", "reasoning": "...", "priority": "..."}]
     recommendations_snapshot = models.JSONField(
-        default=list, verbose_name="Снимок рекомендаций"
+        default=list, verbose_name="Рекомендации"
     )
-    doctor_comment = models.TextField(blank=True, verbose_name="Комментарий врача")
+
+    # Комментарий врача к плану (опционально)
+    doctor_comment = models.TextField(
+        blank=True, verbose_name="Комментарий врача"
+    )
+
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Статус"
+        max_length=20, choices=STATUS_CHOICES, default='draft',
+        verbose_name="Статус"
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
-    approved_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
     sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "План обращения"
         verbose_name_plural = "Планы обращения"
+        ordering = ["-created_at"]
 
     def __str__(self):
-        return f"План для {self.study.patient.patient_code} ({self.get_status_display()})"
+        return (
+            f"План для {self.study.patient.patient_code} "
+            f"({self.get_status_display()})"
+        )
+
+    @property
+    def recommended_specialists(self) -> list:
+        """Список специальностей из snapshot."""
+        return [r["specialist"] for r in self.recommendations_snapshot]
