@@ -341,12 +341,157 @@ class RecommendationAdmin(admin.ModelAdmin):
 # ============================================
 @admin.register(CarePlan)
 class CarePlanAdmin(admin.ModelAdmin):
+    change_form_template = "admin/core/careplan/change_form.html"
     list_display = (
-        'id', 'study', 'status', 'approved_by',
-        'approved_at', 'sent_at'
+        'id', 'study', 'patient_full_name_display',
+        'status', 'created_at', 'sent_at',
     )
     list_filter = ('status',)
     readonly_fields = (
-        'recommendations_snapshot', 'created_at',
-        'approved_at', 'sent_at'
+        'study', 'recommendations_display',
+        'status', 'created_at', 'updated_at', 'sent_at',
+        'patient_info_display', 'study_conclusion_display',
+        'study_file_display',
     )
+    fieldsets = (
+        ('Пациент', {
+            'fields': ('patient_info_display',),
+        }),
+        ('Исследование', {
+            'fields': ('study', 'study_conclusion_display'),
+        }),
+        ('Рекомендованный план', {
+            'fields': ('recommendations_display',),
+            'description': (
+                'Одобренные врачом рекомендации. '
+                'Список обновляется автоматически при изменении рекомендаций.'
+            ),
+        }),
+        ('Комментарий врача', {
+            'fields': ('doctor_comment',),
+        }),
+        ('Статус', {
+            'fields': ('status', 'created_at', 'updated_at', 'sent_at'),
+        }),
+    )
+
+    @admin.display(description="Рекомендации")
+    def recommendations_display(self, obj):
+        """Красиво форматирует список рекомендаций для админки."""
+        from django.utils.html import format_html, format_html_join
+        from django.utils.safestring import mark_safe
+
+        if not obj.recommendations_snapshot:
+            return mark_safe(
+                '<p style="color:#6c757d;font-style:italic;">'
+                'Пока нет одобренных рекомендаций.</p>'
+            )
+
+        priority_labels = {
+            "high": ("🔴 СРОЧНО", "#dc3545"),
+            "medium": ("🟡 Планово", "#fd7e14"),
+            "low": ("🟢 Профилактически", "#28a745"),
+        }
+
+        blocks = []
+        for i, rec in enumerate(obj.recommendations_snapshot, start=1):
+            specialist = (rec.get("specialist") or "—").capitalize()
+            reasoning = rec.get("reasoning") or "—"
+            priority = rec.get("priority", "medium")
+            label, color = priority_labels.get(priority, ("—", "#6c757d"))
+
+            block = format_html(
+                '<div style="'
+                'padding: 12px 16px; margin-bottom: 10px;'
+                'background: #f8f9fa; border-left: 4px solid {color};'
+                'border-radius: 4px;">'
+                '<div style="font-weight: 600; margin-bottom: 6px;">'
+                '{num}. {spec} <span style="color: {color};">— {label}</span>'
+                '</div>'
+                '<div style="color: #495057; line-height: 1.5;">{reasoning}</div>'
+                '</div>',
+                color=color,
+                num=i,
+                spec=specialist,
+                label=label,
+                reasoning=reasoning,
+            )
+            blocks.append(block)
+
+        return mark_safe("".join(blocks))
+
+    @admin.display(description="ФИО пациента")
+    def patient_full_name_display(self, obj):
+        return get_patient_full_name(obj.study.patient.patient_code)
+
+    @admin.display(description="Файл исследования")
+    def study_file_display(self, obj):
+        """Ссылка на скачивание файла исследования."""
+        from django.utils.html import format_html
+        from django.utils.safestring import mark_safe
+
+        file = obj.study.file
+        if not file:
+            return mark_safe(
+                '<span style="color:#6c757d;font-style:italic;">'
+                '— файл не прикреплён</span>'
+            )
+        return format_html(
+            '<a href="{}" target="_blank" '
+            'style="display: inline-block; padding: 6px 12px; '
+            'background: #0d6efd; color: white; '
+            'border-radius: 4px; text-decoration: none;">'
+            '📎 Скачать файл'
+            '</a>',
+            file.url,
+        )
+
+    @admin.display(description="Данные пациента")
+    def patient_info_display(self, obj):
+        from .patient_registry import get_personal_data
+        code = obj.study.patient.patient_code
+        data = get_personal_data(code) or {}
+        patient = obj.study.patient
+        return (
+            f"Код: {code}\n"
+            f"ФИО: {data.get('full_name', '—')}\n"
+            f"Дата рождения: {data.get('birth_date', '—')}\n"
+            f"Возраст: {patient.age}\n"
+            f"Пол: {patient.get_sex_display()}\n"
+            f"Телефон: {data.get('phone', '—')}\n"
+            f"Email: {data.get('email', '—')}"
+        )
+
+    @admin.display(description="Заключение рентгенолога")
+    def study_conclusion_display(self, obj):
+        return obj.study.radiologist_conclusion
+
+    def response_change(self, request, obj):
+        """Перехватываем кнопку «Отправить пациенту»."""
+        from django.http import HttpResponseRedirect
+        from .email_service import send_care_plan_email
+
+        if "_send_care_plan" in request.POST:
+            if obj.status == "sent":
+                self.message_user(
+                    request,
+                    "⚠️ План уже был отправлен.",
+                    level="WARNING",
+                )
+                return HttpResponseRedirect(request.path)
+
+            success = send_care_plan_email(obj)
+            if success:
+                self.message_user(
+                    request,
+                    f"📧 План отправлен пациенту. Статус — «Отправлено».",
+                )
+            else:
+                self.message_user(
+                    request,
+                    "❌ Не удалось отправить: у пациента нет email в реестре.",
+                    level="ERROR",
+                )
+            return HttpResponseRedirect(request.path)
+
+        return super().response_change(request, obj)

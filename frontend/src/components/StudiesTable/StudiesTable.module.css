@@ -37,12 +37,6 @@
   border-radius: 50%;
 }
 
-.pink { background: #ff5c8a; }
-.green { background: #3ddc97; }
-.grey { background: #9aa0a9; }
-.blue { background: #2fa8ff; }
-.yellow { background: #f5c542; }
-
 .empty {
   text-align: center !important;
   color: #9aa0a9;

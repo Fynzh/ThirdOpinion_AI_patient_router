@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
     'core',
     'rest_framework.authtoken',
 ]
@@ -109,9 +110,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'ru-ru'
+TIME_ZONE = 'Europe/Moscow'
+DATETIME_FORMAT = "d.m.Y H:i"
+DATE_FORMAT = "d.m.Y"
 
 USE_I18N = True
 
@@ -146,10 +148,42 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
+}
+# ============================================
+# EMAIL (заглушка для хакатона)
+# ============================================
+# Новый формат Django 6.1. Письма печатаются в консоль.
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.dummy.EmailBackend",
+    },
+}
+
+DEFAULT_FROM_EMAIL = "noreply@thirdopinion.demo"
+
+# Телефон клиники (заглушка) — для кнопки "Записаться"
+CLINIC_PHONE = "+70000000000"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# ============================================
+# SWAGGER / OpenAPI
+# ============================================
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'MedRoute API',
+    'DESCRIPTION': (
+        'Сервис формирования персонального плана дальнейшего обращения пациента '
+        'на основе ИИ-анализа заключений рентгенолога. '
+        'Кейс компании «Третье Мнение».'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
