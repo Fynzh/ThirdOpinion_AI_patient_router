@@ -1,0 +1,90 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+    {{ block.super }}
+
+    {% if original %}
+    <div class="submit-row" style="
+        margin-top: 16px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    ">
+        <p style="margin: 0 0 12px; font-weight: 600; color: #495057;">
+            Заключение врача
+        </p>
+
+        {% if original.status == "approved" %}
+            {# ----- УЖЕ ОДОБРЕНО ----- #}
+            <div style="
+                display: inline-block;
+                padding: 10px 24px;
+                background: #d4edda;
+                color: #155724;
+                border-radius: 4px;
+                font-weight: 600;
+                border: 1px solid #c3e6cb;
+            ">
+                ✅ Врач одобрил рекомендацию
+            </div>
+            <p style="margin: 12px 0 0; color: #6c757d; font-size: 12px;">
+                Чтобы изменить решение — отредактируйте поля выше и сохраните.
+                После правки рекомендация вернётся в статус «Ожидает проверки».
+            </p>
+
+        {% elif original.status == "rejected" %}
+            {# ----- УЖЕ ОТКЛОНЕНО ----- #}
+            <div style="
+                display: inline-block;
+                padding: 10px 24px;
+                background: #f8d7da;
+                color: #721c24;
+                border-radius: 4px;
+                font-weight: 600;
+                border: 1px solid #f5c6cb;
+            ">
+                ❌ Врач отклонил рекомендацию
+            </div>
+            <p style="margin: 12px 0 0; color: #6c757d; font-size: 12px;">
+                Чтобы изменить решение — отредактируйте поля выше и сохраните.
+                После правки рекомендация вернётся в статус «Ожидает проверки».
+            </p>
+
+        {% else %}
+            {# ----- ЖДЁТ ПРОВЕРКИ ----- #}
+            <input type="submit"
+                   value="✅ Одобрить"
+                   name="_approve_recommendation"
+                   style="
+                       background: #28a745;
+                       color: white;
+                       padding: 10px 24px;
+                       border: none;
+                       border-radius: 4px;
+                       font-weight: 600;
+                       cursor: pointer;
+                       margin-right: 8px;
+                   ">
+
+            <input type="submit"
+                   value="❌ Отклонить"
+                   name="_reject_recommendation"
+                   style="
+                       background: #dc3545;
+                       color: white;
+                       padding: 10px 24px;
+                       border: none;
+                       border-radius: 4px;
+                       font-weight: 600;
+                       cursor: pointer;
+                   ">
+
+            <p style="margin: 12px 0 0; color: #6c757d; font-size: 12px;">
+                «Одобрить» — рекомендация попадёт в финальный план.
+                «Отклонить» — не попадёт.
+            </p>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endblock %}
