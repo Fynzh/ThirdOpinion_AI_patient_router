@@ -1,0 +1,46 @@
+.scroll {
+  overflow-x: auto;
+  color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: #585a61 #2a2d33;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #3a3d44;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.table tbody tr:hover {
+  background: #2a2d33;
+  cursor: pointer;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.pink { background: #ff5c8a; }
+.green { background: #3ddc97; }
+.grey { background: #9aa0a9; }
+
+.empty {
+  text-align: center !important;
+  color: #9aa0a9;
+  cursor: not-allowed;
+}

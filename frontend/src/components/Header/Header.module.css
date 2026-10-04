@@ -2,6 +2,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: relative;
   gap: 24px;
   height: 61px;
   padding: 0 20px;
@@ -11,6 +12,7 @@
 .logoLink {
   display: flex;
   align-items: center;
+  text-decoration: none;
 }
 
 .logo {
@@ -20,8 +22,20 @@
 }
 
 .nav {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
+  margin:cauto;
   gap: 16px;
+}
+
+.nav * {
+    transition: all 0.3s ease;
+    &:hover {
+    background-color: #3ddc97;
+}
 }
 
 .link {
@@ -50,4 +64,21 @@
   background: #2a2d33;
   color: #fff;
   text-decoration: none;
+}
+
+.profileActive {
+    background-color: #fff;
+    color: #000;
+}
+
+.logoLabel {
+    display: grid;
+    place-items: center;
+    font-size: 20;
+    line-height: 15px;
+    color: #fff;
+    width: 80px;
+    text-align: center;
+    font-style: oblique;
+    font-weight: bold;
 }
