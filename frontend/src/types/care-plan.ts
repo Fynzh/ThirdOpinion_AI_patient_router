@@ -20,7 +20,14 @@ export interface CarePlan {
   recommendations_snapshot: CarePlanItem[];
   doctor_comment: string;
   status: CarePlanStatus;
+  status_display: string;
   created_at: ISODateTime;
   updated_at: ISODateTime;
   sent_at: ISODateTime | null;
+}
+
+export interface SendCarePlanResponse {
+  success: boolean;
+  message: string;
+  plan: CarePlan;
 }

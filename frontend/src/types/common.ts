@@ -16,7 +16,12 @@ export type ApiErrorCode =
   | 'NLP_ERROR'
   | 'INVALID_CREDENTIALS'
   | 'WEAK_PASSWORD'
-  | 'USER_EXISTS';
+  | 'USER_EXISTS'
+  | 'PLAN_ALREADY_SENT'
+  | 'NO_DRAFT_PLAN'
+  | 'NO_PATIENT_EMAIL'
+  | 'EMAIL_SEND_ERROR'
+  | 'PATIENT_NOT_FOUND';
 
 export interface ApiErrorBody {
   error: string;

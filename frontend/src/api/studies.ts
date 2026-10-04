@@ -4,38 +4,13 @@ import type {
   GenerateRecommendationsResponse,
   Recommendation,
 } from '@/types/recommendation';
-import { USE_MOCK, delay, getJson, postJson, unwrapList, postForm } from './http';
-
-const MOCK_STUDIES: StudyListItem[] = [
-  {
-    id: 1, patient: 1, patient_code: 'PAT-2026-A3F8B1', patient_full_name: 'Тестовый Пациент Первый',
-    modality: 'MAMMO', modality_display: 'Маммограмма',
-    study_date: '2022-09-27', status: 'ai_done', status_display: 'ИИ обработал — ждёт врача',
-    recommendations_count: 3, created_at: '2026-05-21T15:09:00Z',
-  },
-  {
-    id: 2, patient: 2, patient_code: 'PAT-2026-B7C2D9', patient_full_name: 'Тестовый Пациент Второй',
-    modality: 'CHEST_CT', modality_display: 'КТ органов грудной клетки',
-    study_date: '2024-02-17', status: 'approved', status_display: 'План утверждён',
-    recommendations_count: 2, created_at: '2026-05-21T14:55:00Z',
-  },
-  {
-    id: 3, patient: 3, patient_code: 'PAT-2026-C1E4F0', patient_full_name: 'PAT-2026-C1E4F0',
-    modality: 'FLG', modality_display: 'ФЛГ',
-    study_date: '2023-08-02', status: 'processing', status_display: 'ИИ обрабатывает',
-    recommendations_count: 0, created_at: '2026-05-21T14:40:00Z',
-  },
-];
+import type { CarePlan, SendCarePlanResponse } from '@/types/care-plan';
+import { ApiError, getJson, patchJson, postForm, postJson, unwrapList } from './http';
+import { getToken } from './token';
 
 export async function fetchStudies(): Promise<StudyListItem[]> {
-  if (USE_MOCK) {
-    await delay(400);
-    return MOCK_STUDIES;
-  }
   return unwrapList(await getJson<StudyListItem[]>('/api/studies/'));
 }
-
-// Функции ниже мок-веток не имеют и всегда обращаются к серверу
 
 export const fetchStudy = (id: number) =>
   getJson<StudyDetail>(`/api/studies/${id}/`);
@@ -55,4 +30,37 @@ export function createStudy(payload: NewStudyPayload) {
   form.append('radiologist_conclusion', payload.radiologist_conclusion);
   if (payload.file) form.append('file', payload.file);
   return postForm<StudyDetail>('/api/studies/', form);
+}
+
+/** Комментарий врача (только пока план в статусе draft) */
+export const updateCarePlanComment = (studyId: number, doctorComment: string) =>
+  patchJson<CarePlan>(`/api/studies/${studyId}/care-plan/`, { doctor_comment: doctorComment });
+
+/** Отправка плана пациенту на email */
+export const sendCarePlan = (studyId: number) =>
+  postJson<SendCarePlanResponse>(`/api/studies/${studyId}/send/`);
+
+/** Файл отдаётся только с токеном, поэтому обычная ссылка не подходит: качаем через fetch */
+export async function downloadStudyFile(studyId: number, fileName: string) {
+  const token = getToken();
+  const res = await fetch(`/api/studies/${studyId}/file/`, {
+    headers: token ? { Authorization: `Token ${token}` } : {},
+  });
+
+  if (!res.ok) {
+    let message = `Не удалось скачать файл (${res.status})`;
+    try {
+      message = (await res.json()).error ?? message;
+    } catch {
+      /* тело не JSON */
+    }
+    throw new ApiError(message, res.status);
+  }
+
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

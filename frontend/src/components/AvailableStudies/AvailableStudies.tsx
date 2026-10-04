@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import SelectBox from '@/components/SelectBox/SelectBox';
-import type { AvailableStudy } from '@/types/study';
+import type { StudyListItem } from '@/types/study';
+import { formatDate } from '@/utils/formatDateTime';
 import s from './AvailableStudies.module.css';
 
 interface Props {
-  items: AvailableStudy[];
+  items: StudyListItem[];
   isLoading?: boolean;
-  onPick: (study: AvailableStudy) => void;
+  onPick: (study: StudyListItem) => void;
 }
 
 export default function AvailableStudies({ items, isLoading = false, onPick }: Props) {
@@ -27,7 +28,7 @@ export default function AvailableStudies({ items, isLoading = false, onPick }: P
         selectedId={pickedId}
         isLoading={isLoading}
         placeholder="Подставить заключение из исследования"
-        getLabel={(i) => i.title}
+        getLabel={(st) => `${st.display_title || st.modality_display} · ${formatDate(st.study_date)}`}
         onSelect={handleSelect}
       />
     </div>

@@ -1,0 +1,61 @@
+.card {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid #3a3d44;
+  border-left: 4px solid #f5c542;
+  border-radius: 12px;
+  background: #2a2d33;
+}
+.sent { border-left-color: #3ddc97; }
+
+.head { display: flex; align-items: center; gap: 12px; }
+.badge { padding: 3px 10px; border-radius: 999px; background: #3a3d44; font-size: 12px; font-weight: 600; }
+.muted { color: #9aa0a9; font-size: 13px; }
+
+.list { display: grid; gap: 12px; margin: 0; padding-left: 20px; }
+.item { padding-left: 4px; }
+.itemHead { display: flex; align-items: center; gap: 10px; }
+.text { margin: 4px 0 0; color: #d5d8dd; line-height: 1.5; white-space: pre-wrap; }
+
+.prio { padding: 2px 8px; border-radius: 10px; color: #15171a; font-size: 12px; font-weight: 600; }
+.high { background: #ff5c8a; }
+.medium { background: #f5c542; }
+.low { background: #3ddc97; }
+
+.field { display: grid; gap: 6px; color: #9aa0a9; font-size: 13px; }
+.textarea {
+  padding: 12px 14px;
+  border: 1px solid #3a3d44;
+  border-radius: 8px;
+  background: #1f2125;
+  color: #fff;
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+.textarea:focus { outline: 2px solid #2fa8ff; outline-offset: -1px; }
+.textarea:disabled { opacity: 0.6; }
+
+.actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.primary,
+.secondary {
+  height: 40px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.primary { background: linear-gradient(135deg, #3ddc97, #2fa8ff); color: #15171a; }
+.primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(47, 168, 255, 0.35); }
+.secondary { background: #3a3d44; color: #fff; }
+.secondary:hover:not(:disabled) { background: #4a4e57; }
+.primary:disabled,
+.secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.hint { margin: 0; color: #9aa0a9; font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) { .primary, .secondary { transition: none; } }

@@ -16,3 +16,17 @@
 }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .ok { color: #3ddc97; }
+.fileBtn {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2fa8ff;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.fileBtn:disabled { opacity: 0.5; cursor: wait; }
+
+.error { margin: 0 0 16px; color: #ff5c8a; }
+.note { margin: 0 0 12px; color: #f5c542; font-size: 14px; }

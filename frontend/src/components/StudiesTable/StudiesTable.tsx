@@ -21,6 +21,7 @@ export default function StudiesTable({ studies, isEditing, selectedIds, onToggle
             <th>Пациент</th>
             <th>Тип исследования</th>
             <th>Дата исследования</th>
+            <th>Статус</th>
             <th>Рекомендации</th>
             <th>Дата загрузки</th>
           </tr>
@@ -55,8 +56,12 @@ export default function StudiesTable({ studies, isEditing, selectedIds, onToggle
                   <span>{st.patient_full_name}</span>
                   <div className={s.sub}>{st.patient_code}</div>
                 </td>
-                <td>{st.modality_display}</td>
+                <td>
+                  {st.modality_display}
+                  {st.display_title && <div className={s.sub}>{st.display_title}</div>}
+                </td>
                 <td>{formatDate(st.study_date)}</td>
+                <td>{st.status_display}</td>
                 <td>{st.recommendations_count}</td>
                 <td>{formatDateTime(st.created_at)}</td>
                 </tr>

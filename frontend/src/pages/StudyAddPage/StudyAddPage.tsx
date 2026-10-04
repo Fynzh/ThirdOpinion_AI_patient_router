@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPatient } from '@/api/patients';
-import { createStudy } from '@/api/studies';
+import { createStudy, fetchStudy } from '@/api/studies';
 import AvailableStudies from '@/components/AvailableStudies/AvailableStudies';
 import PatientForm from '@/components/PatientForm/PatientForm';
 import PatientSelect from '@/components/PatientSelect/PatientSelect';
@@ -12,7 +12,7 @@ import { usePatients } from '@/hooks/usePatients';
 import { EMPTY_PATIENT_FORM } from '@/types/patient';
 import type { PatientFormValues, PatientSummary } from '@/types/patient';
 import { MODALITY_LABELS } from '@/types/study';
-import type { Modality } from '@/types/study';
+import type { Modality, StudyListItem } from '@/types/study';
 import { TODAY, calcAge } from '@/utils/dates';
 import { isPhoneComplete } from '@/utils/phone';
 import s from './StudyAddPage.module.css';
@@ -63,6 +63,15 @@ export default function StudyAddPage() {
   const handleCreateNew = () => {
     setSelectedId(null);
     setIsCreatingNew(true);
+  };
+
+  const pickAvailable = async (st: StudyListItem) => {
+    try {
+      const full = await fetchStudy(st.id);
+      setConclusion(full.radiologist_conclusion);
+    } catch (err) {
+      setSubmitError((err as Error).message);
+    }
   };
 
   const submit = async (e: FormEvent) => {
@@ -182,7 +191,7 @@ export default function StudyAddPage() {
             key={selectedId}
             items={availableStudies}
             isLoading={availableLoading}
-            onPick={(st) => setConclusion(st.conclusion)}
+            onPick={pickAvailable}
           />
         )}
         <textarea
