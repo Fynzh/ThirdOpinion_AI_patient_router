@@ -9,9 +9,11 @@
 import json
 from pathlib import Path
 from threading import Lock
+import os
 
 # Путь: рядом с manage.py (на уровень выше core/)
-REGISTRY_PATH = Path(__file__).resolve().parent.parent / "patient_registry.json"
+_DEFAULT_PATH = Path(__file__).resolve().parent.parent / "patient_registry.json"
+REGISTRY_PATH = Path(os.environ.get("PATIENT_REGISTRY_PATH", _DEFAULT_PATH))
 
 # Блокировка на случай одновременных запросов
 _lock = Lock()

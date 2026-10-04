@@ -1,6 +1,6 @@
 import type { ApiErrorBody, ApiErrorCode, Paginated } from '@/types/common';
 
-export const USE_MOCK = true; // false, когда бэкенд готов
+export const USE_MOCK = false; // false, когда бэкенд готов
 
 export const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
