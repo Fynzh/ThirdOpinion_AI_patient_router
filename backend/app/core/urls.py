@@ -3,7 +3,9 @@ from .views import (
     StudyListView,
     StudyDetailView,
     GenerateRecommendationsView,
-    ReviewRecommendationView,
+    EditRecommendationView,
+    ApproveRecommendationView,
+    RejectRecommendationView,
     AddDoctorRecommendationView,
     FinalizePlanView,
 )
@@ -19,7 +21,10 @@ urlpatterns = [
     path("studies/<int:pk>/finalize/",
          FinalizePlanView.as_view(), name="study-finalize"),
 
-    # Рекомендации
-    path("recommendations/<int:pk>/review/",
-         ReviewRecommendationView.as_view(), name="recommendation-review"),
+    path("recommendations/<int:pk>/edit/",
+         EditRecommendationView.as_view(), name="recommendation-edit"),
+    path("recommendations/<int:pk>/approve/",
+         ApproveRecommendationView.as_view(), name="recommendation-approve"),
+    path("recommendations/<int:pk>/reject/",
+         RejectRecommendationView.as_view(), name="recommendation-reject"),
 ]

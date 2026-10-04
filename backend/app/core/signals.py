@@ -86,3 +86,49 @@ def auto_run_ai_on_new_study(sender, instance: Study, created: bool, **kwargs):
         "Study #%s: ИИ обработал автоматически, статус=%s",
         instance.id, instance.status,
     )
+
+
+from django.db.models.signals import pre_save
+from .models import Recommendation
+
+
+@receiver(pre_save, sender=Recommendation)
+def auto_mark_edited(sender, instance: Recommendation, **kwargs):
+    """
+    Автоматически ставит статус 'edited', если врач изменил
+    ключевые поля рекомендации (специалист, обоснование, приоритет).
+
+    НЕ трогает рекомендации от врача (source='doctor').
+    НЕ трогает, если статус уже был approved/rejected.
+    """
+    # Новую рекомендацию не трогаем
+    if not instance.pk:
+        return
+
+    # Рекомендации от врача — его собственные, статус уже approved
+    if instance.source != "ai":
+        return
+
+    # Достаём старое состояние из БД
+    try:
+        old = Recommendation.objects.get(pk=instance.pk)
+    except Recommendation.DoesNotExist:
+        return
+
+    # Если статус уже approved/rejected — не перезаписываем
+    if old.status in ("approved", "rejected"):
+        return
+
+    # Проверяем, изменились ли ключевые поля
+    fields_changed = (
+            old.specialist != instance.specialist
+            or old.reasoning != instance.reasoning
+            or old.priority != instance.priority
+    )
+
+    if fields_changed:
+        instance.status = "edited"
+        logger.info(
+            "Recommendation #%s: врач изменил поля → статус 'edited'",
+            instance.pk,
+        )

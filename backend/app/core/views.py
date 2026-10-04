@@ -110,10 +110,13 @@ class GenerateRecommendationsView(APIView):
             "summary": result.get("summary", ""),
         })
 
-class ReviewRecommendationView(APIView):
+# ============================================
+# 4. РЕДАКТИРОВАНИЕ РЕКОМЕНДАЦИИ (без одобрения)
+# ============================================
+class EditRecommendationView(APIView):
     """
-    PATCH /api/recommendations/{id}/review/
-    Врач одобряет, изменяет или отклоняет рекомендацию.
+    PATCH /api/recommendations/{id}/edit/
+    Врач меняет поля рекомендации. Статус автоматически становится 'edited'.
     """
     def patch(self, request, pk):
         try:
@@ -124,32 +127,85 @@ class ReviewRecommendationView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        decision = request.data.get("decision")
-        if decision not in ["approved", "edited", "rejected"]:
-            return Response(
-                {"error": "decision должен быть approved, edited или rejected",
-                 "code": "VALIDATION_ERROR"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        # Меняем только те поля, что прислал фронт
+        specialist = request.data.get("specialist")
+        if specialist and specialist.strip():
+            rec.specialist = specialist.strip()
 
-        # Применяем изменения, если врач изменил
-        if decision == "edited":
-            specialist = request.data.get("specialist")
-            if specialist:
-                rec.specialist = specialist
-            reasoning = request.data.get("reasoning")
-            if reasoning:
-                rec.reasoning = reasoning
-            priority = request.data.get("priority")
-            if priority in ["high", "medium", "low"]:
-                rec.priority = priority
+        reasoning = request.data.get("reasoning")
+        if reasoning and reasoning.strip():
+            rec.reasoning = reasoning.strip()
 
-        # Обновляем статус и метаданные
-        rec.status = decision
-        rec.doctor_comment = request.data.get("doctor_comment", "")
-        rec.reviewed_at = timezone.now()
+        priority = request.data.get("priority")
+        if priority in ["high", "medium", "low"]:
+            rec.priority = priority
+
+        doctor_comment = request.data.get("doctor_comment")
+        if doctor_comment is not None:
+            rec.doctor_comment = doctor_comment
+
         if request.user.is_authenticated:
             rec.reviewed_by = request.user
+        rec.reviewed_at = timezone.now()
+
+        # save() — сигнал pre_save автоматически поставит 'edited',
+        # если реально что-то изменилось
+        rec.save()
+
+        return Response(RecommendationSerializer(rec).data)
+
+
+# ============================================
+# 5. ОДОБРИТЬ РЕКОМЕНДАЦИЮ
+# ============================================
+class ApproveRecommendationView(APIView):
+    """
+    POST /api/recommendations/{id}/approve/
+    Врач одобряет рекомендацию (без изменений или после редактирования).
+    """
+    def post(self, request, pk):
+        try:
+            rec = Recommendation.objects.get(id=pk)
+        except Recommendation.DoesNotExist:
+            return Response(
+                {"error": "Рекомендация не найдена", "code": "RECOMMENDATION_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        rec.status = "approved"
+        if request.data.get("doctor_comment") is not None:
+            rec.doctor_comment = request.data.get("doctor_comment", "")
+        if request.user.is_authenticated:
+            rec.reviewed_by = request.user
+        rec.reviewed_at = timezone.now()
+        rec.save()
+
+        return Response(RecommendationSerializer(rec).data)
+
+
+# ============================================
+# 6. ОТКЛОНИТЬ РЕКОМЕНДАЦИЮ
+# ============================================
+class RejectRecommendationView(APIView):
+    """
+    POST /api/recommendations/{id}/reject/
+    Врач отклоняет рекомендацию.
+    """
+    def post(self, request, pk):
+        try:
+            rec = Recommendation.objects.get(id=pk)
+        except Recommendation.DoesNotExist:
+            return Response(
+                {"error": "Рекомендация не найдена", "code": "RECOMMENDATION_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        rec.status = "rejected"
+        if request.data.get("doctor_comment") is not None:
+            rec.doctor_comment = request.data.get("doctor_comment", "")
+        if request.user.is_authenticated:
+            rec.reviewed_by = request.user
+        rec.reviewed_at = timezone.now()
         rec.save()
 
         return Response(RecommendationSerializer(rec).data)

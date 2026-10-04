@@ -214,6 +214,7 @@ class RecommendationAdmin(admin.ModelAdmin):
     search_fields = ('specialist', 'reasoning')
     readonly_fields = ('raw_model_output', 'created_at', 'study_conclusion_display')
     ordering = ('-created_at',)
+    actions = ['approve_selected', 'reject_selected']
 
     fieldsets = (
         ('Основное', {
@@ -223,7 +224,7 @@ class RecommendationAdmin(admin.ModelAdmin):
                 'reasoning', 'priority', 'confidence',
             ),
         }),
-        ('Заключение рентгенолога', {
+        ('Заключение рентгенолога (для сверки)', {
             'fields': ('study_conclusion_display',),
             'description': (
                 'Оригинальный текст заключения. Сверяйте рекомендации ИИ '
@@ -242,6 +243,36 @@ class RecommendationAdmin(admin.ModelAdmin):
     @admin.display(description="Заключение рентгенолога")
     def study_conclusion_display(self, obj):
         return obj.study.radiologist_conclusion
+
+    # ----- Действия -----
+
+    @admin.action(description="✅ Одобрить выбранные рекомендации")
+    def approve_selected(self, request, queryset):
+        from django.utils import timezone
+        count = 0
+        for rec in queryset:
+            if rec.status == "rejected":
+                continue
+            rec.status = "approved"
+            if request.user.is_authenticated:
+                rec.reviewed_by = request.user
+            rec.reviewed_at = timezone.now()
+            rec.save()
+            count += 1
+        self.message_user(request, f"✅ Одобрено: {count}")
+
+    @admin.action(description="❌ Отклонить выбранные рекомендации")
+    def reject_selected(self, request, queryset):
+        from django.utils import timezone
+        count = 0
+        for rec in queryset:
+            rec.status = "rejected"
+            if request.user.is_authenticated:
+                rec.reviewed_by = request.user
+            rec.reviewed_at = timezone.now()
+            rec.save()
+            count += 1
+        self.message_user(request, f"❌ Отклонено: {count}")
 
 # ============================================
 # ПЛАН ОБРАЩЕНИЯ

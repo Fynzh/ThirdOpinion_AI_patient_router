@@ -54,7 +54,7 @@ class Study(models.Model):
         ('MAMMO', 'Маммограмма'),
     ]
     STATUS_CHOICES = [
-        ('new', 'Новое — ждёт обработки ИИ'),
+        ('processing', 'ИИ обрабатывает'),
         ('ai_done', 'ИИ обработал — ждёт врача'),
         ('in_review', 'Врач проверяет'),
         ('approved', 'План утверждён'),
@@ -77,7 +77,7 @@ class Study(models.Model):
         upload_to='studies/', blank=True, null=True, verbose_name="Файл"
     )
     status = models.CharField(
-        max_length=20, choices=STATUS_CHOICES, default='new', verbose_name="Статус"
+        max_length=20, choices=STATUS_CHOICES, default='processing', verbose_name="Статус"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
