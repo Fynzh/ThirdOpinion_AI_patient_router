@@ -379,7 +379,7 @@ class CarePlanAdmin(admin.ModelAdmin):
             'fields': ('patient_info_display',),
         }),
         ('Исследование', {
-            'fields': ('study', 'study_conclusion_display'),
+            'fields': ('study', 'study_conclusion_display', 'study_file_display'),
         }),
         ('Рекомендованный план', {
             'fields': ('recommendations_display',),
@@ -447,7 +447,7 @@ class CarePlanAdmin(admin.ModelAdmin):
 
     @admin.display(description="Файл исследования")
     def study_file_display(self, obj):
-        """Ссылка на скачивание файла исследования."""
+        """Ссылка на защищённый эндпоинт скачивания файла."""
         from django.utils.html import format_html
         from django.utils.safestring import mark_safe
 
@@ -457,30 +457,42 @@ class CarePlanAdmin(admin.ModelAdmin):
                 '<span style="color:#6c757d;font-style:italic;">'
                 '— файл не прикреплён</span>'
             )
+        # Ссылка на защищённый API-эндпоинт, а не на /media/
         return format_html(
-            '<a href="{}" target="_blank" '
+            '<a href="/api/studies/{}/file/" target="_blank" '
             'style="display: inline-block; padding: 6px 12px; '
             'background: #0d6efd; color: white; '
             'border-radius: 4px; text-decoration: none;">'
             '📎 Скачать файл'
             '</a>',
-            file.url,
+            obj.study.id,
         )
 
     @admin.display(description="Данные пациента")
+    @admin.display(description="Данные пациента")
     def patient_info_display(self, obj):
+        from django.utils.html import format_html, escape
         from .patient_registry import get_personal_data
+
         code = obj.study.patient.patient_code
         data = get_personal_data(code) or {}
         patient = obj.study.patient
-        return (
-            f"Код: {code}\n"
-            f"ФИО: {data.get('full_name', '—')}\n"
-            f"Дата рождения: {data.get('birth_date', '—')}\n"
-            f"Возраст: {patient.age}\n"
-            f"Пол: {patient.get_sex_display()}\n"
-            f"Телефон: {data.get('phone', '—')}\n"
-            f"Email: {data.get('email', '—')}"
+
+        return format_html(
+            "Код: {}<br>"
+            "ФИО: {}<br>"
+            "Дата рождения: {}<br>"
+            "Возраст: {}<br>"
+            "Пол: {}<br>"
+            "Телефон: {}<br>"
+            "Email: {}",
+            code,
+            data.get('full_name', '—'),
+            data.get('birth_date', '—'),
+            patient.age,
+            patient.get_sex_display(),
+            data.get('phone', '—'),
+            data.get('email', '—'),
         )
 
     @admin.display(description='Заключение платформы «Третье Мнение»')

@@ -1,23 +1,60 @@
 from rest_framework.generics import ListAPIView, RetrieveAPIView
-
+from .patient_registry import get_personal_data, set_personal_data, update_personal_data
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-
-from .models import Study, Recommendation, CarePlan
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from .models import Study, Recommendation, CarePlan, Patient
 from .serializers import (
     StudyListSerializer, StudyDetailSerializer,
     RecommendationSerializer, CarePlanSerializer,
+    StudyCreateUpdateSerializer,
+    PatientSerializer,
+    PatientCreateSerializer,
+    PatientUpdateSerializer,
 )
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
-class StudyListView(ListAPIView):
+# ============================================
+# 1. СПИСОК + СОЗДАНИЕ ИССЛЕДОВАНИЙ
+# ============================================
+class StudyListCreateView(APIView):
     """
-    GET /api/studies/
-    Отдаёт список всех исследований (кратко).
+    GET  /api/studies/     — список исследований
+    POST /api/studies/     — создание (multipart, с файлом)
     """
-    queryset = Study.objects.select_related('patient').all()
-    serializer_class = StudyListSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def get(self, request):
+        queryset = (
+            Study.objects
+            .select_related('patient')
+            .prefetch_related('care_plans')
+            .all()
+        )
+        serializer = StudyListSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = StudyCreateUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "error": "Некорректные данные",
+                    "code": "VALIDATION_ERROR",
+                    "details": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        study = serializer.save()
+        study.refresh_from_db()
+
+        return Response(
+            StudyDetailSerializer(study).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 class StudyDetailView(RetrieveAPIView):
     """
@@ -25,7 +62,7 @@ class StudyDetailView(RetrieveAPIView):
     Отдаёт полную карточку одного исследования.
     Включает пациента (анонимно) и все рекомендации.
     """
-    queryset = Study.objects.select_related('patient').prefetch_related('recommendations')
+    queryset = Study.objects.select_related('patient').prefetch_related('recommendations', 'care_plans')
     serializer_class = StudyDetailSerializer
 
 
@@ -346,7 +383,6 @@ class SendCarePlanView(APIView):
             )
 
         # 3. Проверяем, что есть email пациента
-        from .patient_registry import get_personal_data
         personal = get_personal_data(study.patient.patient_code) or {}
         if not personal.get("email"):
             return Response(
@@ -386,3 +422,286 @@ class SendCarePlanView(APIView):
                 "plan": CarePlanSerializer(plan).data,
             }
         )
+
+
+# ============================================
+# 10. РЕДАКТИРОВАНИЕ ИССЛЕДОВАНИЯ
+# ============================================
+class StudyUpdateView(APIView):
+    """
+    PATCH /api/studies/{id}/
+    Частичное обновление исследования.
+    Можно менять всё, кроме status.
+    """
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    def patch(self, request, pk):
+        try:
+            study = Study.objects.get(id=pk)
+        except Study.DoesNotExist:
+            return Response(
+                {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = StudyCreateUpdateSerializer(
+            study, data=request.data, partial=True
+        )
+        if not serializer.is_valid():
+            return Response(
+                {
+                    "error": "Некорректные данные",
+                    "code": "VALIDATION_ERROR",
+                    "details": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer.save()
+        study.refresh_from_db()
+
+        return Response(StudyDetailSerializer(study).data)
+
+
+# ============================================
+# 11. ЗАГРУЗКА / ЗАМЕНА ФАЙЛА
+# ============================================
+class StudyUploadFileView(APIView):
+    """
+    POST /api/studies/{id}/upload-file/
+    Content-Type: multipart/form-data
+    Body: file=<файл>
+    Загружает или заменяет файл исследования.
+    """
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, pk):
+        try:
+            study = Study.objects.get(id=pk)
+        except Study.DoesNotExist:
+            return Response(
+                {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        uploaded = request.FILES.get("file")
+        if not uploaded:
+            return Response(
+                {"error": "Файл не передан. Используйте поле 'file'.",
+                 "code": "FILE_REQUIRED"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Ограничение размера — 50 МБ (Gmail всё равно 25 МБ пропустит)
+        if uploaded.size > 50 * 1024 * 1024:
+            return Response(
+                {"error": "Файл больше 50 МБ", "code": "FILE_TOO_LARGE"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        study.file = uploaded
+        study.save(update_fields=["file", "updated_at"])
+
+        return Response(
+            {
+                "success": True,
+                "file_endpoint": (
+                    f"/api/studies/{study.id}/file/" if study.file else None
+                ),
+                "file_name": (
+                    study.file.name.split("/")[-1] if study.file else None
+                ),
+            }
+        )
+
+
+# ============================================
+# 12. СКАЧИВАНИЕ ФАЙЛА (с проверкой прав)
+# ============================================
+class StudyDownloadFileView(APIView):
+    """
+    GET /api/studies/{id}/file/
+    Отдаёт файл исследования. Требует токен.
+    """
+    authentication_classes = [
+        TokenAuthentication,
+        SessionAuthentication,
+    ]
+    def get(self, request, pk):
+        try:
+            study = Study.objects.get(id=pk)
+        except Study.DoesNotExist:
+            return Response(
+                {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not study.file:
+            return Response(
+                {"error": "У исследования нет файла", "code": "FILE_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        from django.http import FileResponse
+        import os
+
+        try:
+            study.file.open("rb")
+            response = FileResponse(
+                study.file,
+                as_attachment=True,
+                filename=os.path.basename(study.file.name),
+            )
+            return response
+        except FileNotFoundError:
+            return Response(
+                {"error": "Файл потерян на диске", "code": "FILE_MISSING"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+# ============================================
+# 13. СПИСОК И СОЗДАНИЕ ПАЦИЕНТОВ
+# ============================================
+class PatientListCreateView(APIView):
+    """
+    GET  /api/patients/   — список пациентов
+    POST /api/patients/   — создать пациента
+    """
+    def get(self, request):
+        patients = Patient.objects.all().order_by('-created_at')
+        return Response(PatientSerializer(patients, many=True).data)
+
+    def post(self, request):
+        serializer = PatientCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"error": "Некорректные данные",
+                 "code": "VALIDATION_ERROR",
+                 "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = serializer.validated_data
+
+        # 1. Создаём анонимного пациента (в БД)
+        patient = Patient.objects.create(
+            age=data["age"],
+            sex=data["sex"],
+        )
+
+        # 2. Сохраняем персональные данные в JSON-реестр
+        personal = {}
+        for field in ["full_name", "birth_date", "phone", "email"]:
+            value = data.get(field)
+            if value:
+                personal[field] = (
+                    value.isoformat() if hasattr(value, "isoformat") else value
+                )
+        if personal:
+            set_personal_data(patient.patient_code, personal)
+
+        return Response(
+            PatientSerializer(patient).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+# ============================================
+# 14. ДЕТАЛИ И ОБНОВЛЕНИЕ ПАЦИЕНТА
+# ============================================
+class PatientDetailView(APIView):
+    """
+    GET    /api/patients/{id}/  — детали
+    PATCH  /api/patients/{id}/  — обновить
+    """
+    def get(self, request, pk):
+        try:
+            patient = Patient.objects.get(id=pk)
+        except Patient.DoesNotExist:
+            return Response(
+                {"error": "Пациент не найден", "code": "PATIENT_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return Response(PatientSerializer(patient).data)
+
+    def patch(self, request, pk):
+        try:
+            patient = Patient.objects.get(id=pk)
+        except Patient.DoesNotExist:
+            return Response(
+                {"error": "Пациент не найден", "code": "PATIENT_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = PatientUpdateSerializer(data=request.data, partial=True)
+        if not serializer.is_valid():
+            return Response(
+                {"error": "Некорректные данные",
+                 "code": "VALIDATION_ERROR",
+                 "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        data = serializer.validated_data
+
+        # 1. Обновляем анонимные поля в БД
+        if "age" in data:
+            patient.age = data["age"]
+        if "sex" in data:
+            patient.sex = data["sex"]
+        patient.save()
+
+        # 2. Обновляем персональные в JSON-реестре
+        personal = {}
+        for field in ["full_name", "birth_date", "phone", "email"]:
+            if field in data:
+                value = data[field]
+                personal[field] = (
+                    value.isoformat() if hasattr(value, "isoformat") else value
+                )
+        if personal:
+            update_personal_data(patient.patient_code, **personal)
+
+        return Response(PatientSerializer(patient).data)
+
+# ============================================
+# 15. ДОСТУПНЫЕ ИССЛЕДОВАНИЯ ПАЦИЕНТА
+# ============================================
+class PatientAvailableStudiesView(APIView):
+    """
+    GET /api/patients/{id}/available-studies/
+    Возвращает список исследований пациента.
+    Query-параметры (опционально):
+        ?status=sent|draft|ai_done  — фильтр по статусу исследования
+        ?has_plan=false             — только те, у которых нет плана
+    """
+    def get(self, request, pk):
+        try:
+            patient = Patient.objects.get(id=pk)
+        except Patient.DoesNotExist:
+            return Response(
+                {"error": "Пациент не найден", "code": "PATIENT_NOT_FOUND"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        studies = (
+            patient.studies
+            .select_related('patient')
+            .prefetch_related('care_plans', 'recommendations')
+            .order_by('-created_at')
+        )
+
+        # Фильтр по статусу исследования
+        status_filter = request.query_params.get('status')
+        if status_filter:
+            studies = studies.filter(status=status_filter)
+
+        # Фильтр «нет плана вообще»
+        has_plan = request.query_params.get('has_plan')
+        if has_plan == 'false':
+            studies = studies.filter(care_plans__isnull=True)
+        elif has_plan == 'true':
+            studies = studies.filter(care_plans__isnull=False).distinct()
+
+        serializer = StudyListSerializer(studies, many=True)
+        return Response(serializer.data)
