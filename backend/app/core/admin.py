@@ -222,7 +222,7 @@ class RecommendationAdmin(admin.ModelAdmin):
     list_filter = ('source', 'status', 'priority')
     search_fields = ('specialist', 'reasoning')
     readonly_fields = (
-        'source', 'status',
+        'source', 'status', 'reviewed_by_display',
         'raw_model_output', 'created_at', 'study_conclusion_display',
     )
     ordering = ('-created_at',)
@@ -253,10 +253,17 @@ class RecommendationAdmin(admin.ModelAdmin):
             ),
         }),
         ('Заключение врача', {
-            'fields': ('reviewed_by', 'reviewed_at'),
+            'fields': ('reviewed_by_display', 'reviewed_at'),
             'description': 'Правки вносите в поле «Обоснование» выше.',
         }),
     )
+
+    @admin.display(description="Проверил")
+    def reviewed_by_display(self, obj):
+        """Показывает логин врача, который проверил рекомендацию. Только чтение."""
+        if obj.reviewed_by:
+            return obj.reviewed_by.username
+        return "— (ещё не проверено)"
 
     @admin.display(description="ФИО пациента")
     def patient_full_name_display(self, obj):
