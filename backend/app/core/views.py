@@ -29,8 +29,8 @@ class StudyListCreateView(APIView):
     def get(self, request):
         queryset = (
             Study.objects
-            .select_related('patient')
-            .prefetch_related('care_plans')
+            .select_related('patient', 'care_plan')
+            .prefetch_related('recommendations')
             .all()
         )
         serializer = StudyListSerializer(queryset, many=True)
@@ -62,7 +62,7 @@ class StudyDetailView(RetrieveAPIView):
     Отдаёт полную карточку одного исследования.
     Включает пациента (анонимно) и все рекомендации.
     """
-    queryset = Study.objects.select_related('patient').prefetch_related('recommendations', 'care_plans')
+    queryset = Study.objects.select_related('patient', 'care_plan').prefetch_related('recommendations')
     serializer_class = StudyDetailSerializer
 
 
@@ -306,10 +306,10 @@ class UpdateCarePlanCommentView(APIView):
             )
 
         # 2. Ищем draft-план
-        plan = study.care_plans.filter(status='draft').first()
-        if plan is None:
+        plan = getattr(study, 'care_plan', None)
+        if plan is None or plan.status != 'draft':
             # Может, есть sent — но его редактировать нельзя
-            sent_exists = study.care_plans.filter(status='sent').exists()
+            sent_exists = plan is not None and plan.status == 'sent'
             if sent_exists:
                 return Response(
                     {
@@ -363,9 +363,9 @@ class SendCarePlanView(APIView):
             )
 
         # 2. Ищем draft-план
-        plan = study.care_plans.filter(status='draft').first()
-        if plan is None:
-            sent_exists = study.care_plans.filter(status='sent').exists()
+        plan = getattr(study, 'care_plan', None)
+        if plan is None or plan.status != 'draft':
+            sent_exists = plan is not None and plan.status == 'sent'
             if sent_exists:
                 return Response(
                     {
@@ -686,8 +686,7 @@ class PatientAvailableStudiesView(APIView):
 
         studies = (
             patient.studies
-            .select_related('patient')
-            .prefetch_related('care_plans', 'recommendations')
+            .select_related('care_plan').prefetch_related('recommendations')
             .order_by('-created_at')
         )
 
@@ -699,9 +698,9 @@ class PatientAvailableStudiesView(APIView):
         # Фильтр «нет плана вообще»
         has_plan = request.query_params.get('has_plan')
         if has_plan == 'false':
-            studies = studies.filter(care_plans__isnull=True)
+            studies = studies.filter(care_plan__isnull=True)
         elif has_plan == 'true':
-            studies = studies.filter(care_plans__isnull=False).distinct()
+            studies = studies.filter(care_plan__isnull=False)   # без .distinct(), он не нужен
 
         serializer = StudyListSerializer(studies, many=True)
         return Response(serializer.data)
