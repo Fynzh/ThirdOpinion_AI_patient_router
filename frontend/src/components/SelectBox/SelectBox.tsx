@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, ReactNode } from 'react';
+import { useState, useRef, useEffect, type ReactNode } from 'react';
 import s from './SelectBox.module.css'; // Общие стили для всех селектов
 
 // Описываем требования к структуре данных: у каждого элемента должен быть как минимум id
