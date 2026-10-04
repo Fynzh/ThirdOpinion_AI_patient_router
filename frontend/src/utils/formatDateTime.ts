@@ -7,3 +7,9 @@ const formatter = new Intl.DateTimeFormat('ru-RU', {
 });
 
 export const formatDateTime = (iso: string) => formatter.format(new Date(iso));
+
+const dateFormatter = new Intl.DateTimeFormat('ru-RU', {
+  day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC',
+});
+
+export const formatDate = (iso: string) => dateFormatter.format(new Date(iso));

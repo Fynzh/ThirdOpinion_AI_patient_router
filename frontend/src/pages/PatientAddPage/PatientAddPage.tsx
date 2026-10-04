@@ -1,15 +1,16 @@
 import { useState } from "react";
 import PatientSelect from "@/components/PatientSelect/PatientSelect";
 import { usePatients } from "@/hooks/usePatients";
+import { getPatientLabel } from "@/utils/patientLabel";
 import s from "./PatientAddPage.module.css";
 
 export default function PatientAddPage() {
   const { patients, isLoading, error } = usePatients();
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const selectedPatient = patients?.find((p) => p.id === selectedId);
 
-  const handleSelect = (id: string) => {
+  const handleSelect = (id: number) => {
     setSelectedId(id);
     setIsCreatingNew(false);
   };
@@ -34,7 +35,9 @@ export default function PatientAddPage() {
       />
 
       {isCreatingNew && <div>Здесь будет модуль добавления пациента</div>}
-      {selectedId && <p>{selectedPatient?.fullName}</p>}
+      {selectedPatient && (
+        <p>{getPatientLabel(selectedPatient.id, selectedPatient.patient_code)}</p>
+      )}
     </>
   );
 }

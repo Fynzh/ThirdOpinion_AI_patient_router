@@ -1,57 +1,70 @@
 import { useNavigate } from 'react-router-dom';
-import type { Study, StudyStatus } from '@/types/study';
-import { formatDateTime } from '@/utils/formatDateTime';
+import type { StudyListItem, StudyStatus } from '@/types/study';
+import { formatDateTime, formatDate } from '@/utils/formatDateTime';
+import { getPatientLabel } from '@/utils/patientLabel';
 import s from './StudiesTable.module.css';
 
-const STATUS: Record<StudyStatus, { label: string; dotClass: string }> = {
-  pathology_found: { label: 'Найдены патологии', dotClass: s.pink },
-  no_pathology: { label: 'Патологии не найдены', dotClass: s.green },
-  processing: { label: 'Обрабатывается', dotClass: s.grey },
+const STATUS_DOT: Record<StudyStatus, string> = {
+  new: s.grey,
+  ai_done: s.blue,
+  in_review: s.yellow,
+  approved: s.green,
+  sent: s.green,
 };
 
 interface StudiesTableProps {
-  studies: Study[];
+  studies: StudyListItem[];
+  isEditing: boolean;
+  selectedIds: number[];
+  onToggleSelect: (id: number) => void;
 }
 
-export default function StudiesTable({ studies }: StudiesTableProps) {
+export default function StudiesTable({ studies, isEditing, selectedIds, onToggleSelect }: StudiesTableProps) {
   const navigate = useNavigate();
     return (
     <div className={s.scroll}>
       <table className={s.table}>
         <thead>
           <tr>
-            <th>ID пациента</th>
-            <th>Пол, возраст</th>
-            <th>Название</th>
-            <th>Статус обработки</th>
+            {isEditing && <th aria-label="Выбор" />}
+            <th>Код пациента</th>
+            <th>Тип исследования</th>
             <th>Дата исследования</th>
+            <th>Статус</th>
+            <th>Рекомендации</th>
             <th>Дата загрузки</th>
-            <th>Срезы</th>
           </tr>
         </thead>
         <tbody>
           {studies.length === 0 && (
             <tr>
-              <td colSpan={7} className={s.empty}>Исследований пока нет</td>
+              <td colSpan={isEditing ? 7 : 6} className={s.empty}>Исследований пока нет</td>
             </tr>
           )}
           {studies.map((st) => {
-            const status = STATUS[st.status];
             return (
               <tr key={st.id} onClick={() => navigate(`/patient/view?id=${st.id}`)}>
-                <td>{st.patientId}</td>
-                <td>{st.sex === 'F' ? 'Ж' : 'М'}, {st.age}</td>
-                <td>{st.title}</td>
+                {isEditing && (
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(st.id)}
+                      onChange={() => onToggleSelect(st.id)}
+                    />
+                  </td>
+                )}
+                <td>{getPatientLabel(st.patient, st.patient_code)}</td>
+                <td>{st.modality_display}</td>
+                <td>{formatDate(st.study_date)}</td>
                 <td>
                   <span className={s.status}>
-                    <span className={`${s.dot} ${status.dotClass}`} aria-hidden="true" />
-                    {status.label}
+                    <span className={`${s.dot} ${STATUS_DOT[st.status]}`} aria-hidden="true" />
+                    {st.status_display}
                   </span>
                 </td>
-                <td>{formatDateTime(st.studyDate)}</td>
-                <td>{formatDateTime(st.uploadedAt)}</td>
-                <td>{st.slicesCount}</td>
-              </tr>
+                <td>{st.recommendations_count}</td>
+                <td>{formatDateTime(st.created_at)}</td>
+                </tr>
             );
           })}
         </tbody>

@@ -3,17 +3,17 @@ import s from './SelectBox.module.css'; // Общие стили для всех
 
 // Описываем требования к структуре данных: у каждого элемента должен быть как минимум id
 interface BaseItem {
-  id: string;
+  id: number;
 }
 
 interface SelectProps<T extends BaseItem> {
   items: T[];
-  selectedId: string | null;
+  selectedId: number | null;
   placeholder?: string;
   isLoading?: boolean;
   // Функция, которая скажет селекту, какое поле объекта выводить как текст
   getLabel: (item: T) => string; 
-  onSelect: (id: string) => void;
+  onSelect: (id: number) => void;
   // Дополнительная кнопка действия внизу (опционально)
   actionButton?: {
     label: string;
@@ -53,7 +53,7 @@ export default function SelectBox<T extends BaseItem>({
   const selectedItem = items.find((item) => item.id === selectedId);
   const currentLabel = selectedItem ? getLabel(selectedItem) : placeholder;
 
-  const handleItemClick = (id: string) => {
+  const handleItemClick = (id: number) => {
     onSelect(id);
     setIsOpen(false);
   };

@@ -1,12 +1,13 @@
-import type { Patient } from '@/types/patient';
+import type { PatientAnonymized } from '@/types/patient';
+import { getPatientLabel } from '@/utils/patientLabel';
 import SelectBox from '@/components/SelectBox/SelectBox'; // Импортируем наш универсальный селект
 
 interface PatientSelectProps {
-  patients: Patient[];
-  selectedId: string | null;
+  patients: PatientAnonymized[];
+  selectedId: number | null;
   isCreatingNew: boolean;
   isLoading?: boolean;
-  onSelect: (id: string) => void;
+  onSelect: (id: number) => void;
   onCreateNew: () => void;
 }
 
@@ -20,12 +21,12 @@ export default function PatientSelect({
 }: PatientSelectProps) {
   
   return (
-    <SelectBox<Patient> // Явно указываем тип данных
+    <SelectBox
       items={patients}
       selectedId={selectedId}
       isLoading={isLoading}
       placeholder={isCreatingNew ? 'Новый пациент' : 'Выберите пациента'}
-      getLabel={(patient) => patient.fullName} // Указываем, как читать имя
+      getLabel={(p) => getPatientLabel(p.id, p.patient_code)} // Указываем, как читать имя
       onSelect={onSelect}
       actionButton={{
         label: 'Новый пациент',
