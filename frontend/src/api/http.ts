@@ -1,4 +1,5 @@
 import type { ApiErrorBody, ApiErrorCode, Paginated } from '@/types/common';
+import { clearToken, getToken } from './token';
 
 export const USE_MOCK = false; // false, когда бэкенд готов
 
@@ -15,13 +16,26 @@ export class ApiError extends Error {
   }
 }
 
+const PUBLIC_URLS = ['/api/auth/login/', '/api/auth/register/'];
+
 async function request<T>(method: string, url: string, body?: unknown): Promise<T> {
+  const isPublic = PUBLIC_URLS.includes(url);
+  const token = isPublic ? null : getToken();
+
+  const headers: Record<string, string> = {};
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (token) headers.Authorization = `Token ${token}`;
+
   const response = await fetch(url, {
     method,
-    credentials: 'include',
-    headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+    headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
+
+  if (response.status === 401 && !isPublic) {
+    clearToken();
+    window.location.assign('/login');
+  }
 
   if (!response.ok) {
     let data: Partial<ApiErrorBody> = {};
