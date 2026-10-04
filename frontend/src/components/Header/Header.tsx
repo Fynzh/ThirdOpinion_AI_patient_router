@@ -1,9 +1,12 @@
 import { Link, NavLink } from "react-router-dom";
 import logo from "@/assets/logo.svg";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { getInitials } from "@/utils/initials";
 import s from "./Header.module.css";
 
 export default function Header() {
-    return (
+  const { user } = useCurrentUser();  
+  return (
     <header className={s.header}>
       <Link to="/studies" className={s.logoLink} aria-label="На главную">
         <img src={logo} alt="" className={s.logo} />
@@ -18,8 +21,12 @@ export default function Header() {
           Маршрутизация
         </NavLink>
       </nav>
-      <NavLink to="/profile" className={({ isActive }) => `${s.user} ${isActive ? s.profileActive : ''}`}>
-        ИФ
+      <NavLink
+        to="/profile"
+        title={user?.username}
+        className={({ isActive }) => `${s.user} ${isActive ? s.profileActive : ''}`}
+      >
+        {user ? getInitials(user.username) : '··'}
       </NavLink>
     </header>
   );

@@ -29,16 +29,43 @@
 .input:focus { outline: 2px solid #2fa8ff; outline-offset: -1px; }
 
 .submit {
-  background: #2fa8ff;
-  color: #15171a;
+  height: 44px;
   border: 0;
-  border-radius: 6px;
-  padding: 10px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3ddc97, #2fa8ff);
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  color: #fff;
   font: inherit;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.4s ease;
 }
-.submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.submit:hover:not(:disabled) {
+  background-position: 100% 50%;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(47, 168, 255, 0.4);
+}
+
+.submit:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+.submit:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submit { transition: none; }
+}
 
 .link {
   background: none;

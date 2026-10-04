@@ -1,0 +1,102 @@
+.wrapper {
+  display: grid;
+  justify-items: center;
+  padding-top: 32px;
+}
+
+.card {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+  max-width: 480px;
+  padding: 32px 28px;
+  border: 1px solid #3a3d44;
+  border-radius: 16px;
+  background: #2a2d33;
+  animation: rise 0.45s ease both;
+}
+
+.top { display: grid; justify-items: center; gap: 10px; text-align: center; }
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3ddc97, #2fa8ff);
+  color: #15171a;
+  font-size: 32px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(47, 168, 255, 0.3);
+  animation: pop 0.5s 0.1s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.name { margin: 0; font-size: 22px; }
+
+.badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(61, 220, 151, 0.15);
+  color: #3ddc97;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.list { display: grid; gap: 10px; margin: 0; }
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #1f2125;
+}
+.row dt { color: #9aa0a9; }
+.row dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+
+.logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ff3e6c, #ff8a00);
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.4s ease;
+}
+.logout:hover {
+  background-position: 100% 50%;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(255, 62, 108, 0.4);
+}
+.logout:active { transform: scale(0.98); box-shadow: none; }
+.logout:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+.icon { width: 18px; height: 18px; transition: transform 0.25s ease; }
+.logout:hover .icon { transform: translateX(4px); }
+
+.state { color: #9aa0a9; text-align: center; }
+.error { color: #ff5c8a; text-align: center; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .avatar { animation: none; }
+  .logout, .icon { transition: none; }
+}
