@@ -57,7 +57,7 @@ export default function StudyPage() {
       <p className={s.sub}>
         {p.patient_code} · {SEX_LABELS[p.sex]}, {p.age} лет · {study.modality_display} от {formatDate(study.study_date)}
       </p>
-      <p className={s.status}>{study.status_display}</p>
+      <p className={s.status}></p>
       {actionError && <p className={s.error} role="alert">{actionError}</p>}
 
       <section className={s.block}>

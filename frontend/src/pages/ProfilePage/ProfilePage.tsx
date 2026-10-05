@@ -22,7 +22,7 @@ export default function ProfilePage() {
   if (error) return <p className={s.error} role="alert">{error.message}</p>;
   if (!user) return null;
 
-  const role = user.is_superuser ? 'Администратор' : user.is_staff ? 'Персонал' : 'Пользователь';
+  const role = user.is_superuser ? 'Администратор' : user.is_staff ? 'Персонал' : 'Доктор';
 
   return (
     <div className={s.wrapper}>

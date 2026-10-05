@@ -21,6 +21,7 @@ export default function StudiesToolbar({ isEditing, onToggleEditing }: StudiesTo
         {isEditing && <button type='button'
             className={`${s.button} ${s.save}`}
             onClick={onToggleEditing}
+            hidden
             >
             Сохранить
             </button>}
@@ -28,7 +29,7 @@ export default function StudiesToolbar({ isEditing, onToggleEditing }: StudiesTo
             className={`${s.button} ${s.undo}`}
             onClick={onToggleEditing}
             >
-            Отменить изменения
+            ОК
             </button>}
         </span>
         <button type='button' className={`${s.button} ${s.upload}`} onClick={() => navigate('/studies/add')}>Новое исследование</button>

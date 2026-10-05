@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 import logo from "@/assets/logo.svg";
+import logoSmall from "@/assets/logo_small.svg";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { getInitials } from "@/utils/initials";
 import s from "./Header.module.css";
@@ -9,7 +10,10 @@ export default function Header() {
   return (
     <header className={s.header}>
       <Link to="/studies" className={s.logoLink} aria-label="На главную">
-        <img src={logo} alt="" className={s.logo} />
+        <picture>
+          <source media="(max-width: 600px)" srcSet={logoSmall} />
+          <img src={logo} alt="" className={s.logo} />
+        </picture>
       </Link>
 
       <nav className={s.nav}>
