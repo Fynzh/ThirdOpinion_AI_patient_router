@@ -1,0 +1,41 @@
+.back { color: #9aa0a9; text-decoration: none; font-size: 14px; }
+.back:hover { color: #fff; }
+.title { margin: 12px 0 4px; }
+.sub { margin: 0 0 4px; color: #9aa0a9; }
+.status { margin: 0 0 24px; color: #2fa8ff; }
+.block { margin-bottom: 32px; }
+.block a { color: #2fa8ff; }
+.conclusion {
+  background: #2a2d33; border: 1px solid #3a3d44; border-radius: 8px;
+  padding: 16px; line-height: 1.5; white-space: pre-wrap;
+}
+.nocards {
+  background: #2a2d33;
+  border: 1px solid #3a3d44;
+  border-left: 4px solid #9aa0a9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-left-color: #3ddc97;
+}
+.row { display: flex; justify-content: space-between; align-items: center; }
+.btn {
+  background: #3a3d44; color: #fff; border: 0; border-radius: 6px;
+  padding: 8px 14px; font: inherit; cursor: pointer;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ok { color: #3ddc97; }
+.fileBtn {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #2fa8ff;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.fileBtn:disabled { opacity: 0.5; cursor: wait; }
+
+.error { margin: 0 0 16px; color: #ff5c8a; }
+.note { margin: 0 0 12px; color: #f5c542; font-size: 14px; }

@@ -95,9 +95,16 @@ class StudyListSerializer(serializers.ModelSerializer):
             'id', 'patient', 'patient_code', 'patient_full_name',
             'display_title', 'title', 'modality', 'modality_display',
             'study_date', 'slices_count', 'status', 'status_display',
-            'recommendations_count', 'created_at',
+            'recommendations_count', 'has_draft_plan', 'has_sent_plan',  # ← добавили
+            'created_at',
         )
 
+    def get_has_draft_plan(self, obj):
+        plan = getattr(obj, 'care_plan', None)
+        return plan is not None and plan.status == 'draft'
+    def get_has_sent_plan(self, obj):
+        plan = getattr(obj, 'care_plan', None)
+        return plan is not None and plan.status == 'sent'
     def get_patient_full_name(self, obj):
         from .patient_registry import get_personal_data
         data = get_personal_data(obj.patient.patient_code) or {}
@@ -123,18 +130,8 @@ class StudyDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_care_plan(self, obj):
-        """
-        Возвращает актуальный план обращения:
-        - draft-план, если он есть (врач с ним работает);
-        - иначе последний sent-план (для просмотра);
-        - иначе None.
-        """
-        plan = obj.care_plans.filter(status='draft').first()
-        if plan is None:
-            plan = obj.care_plans.filter(status='sent').order_by('-sent_at').first()
-        if plan is None:
-            return None
-        return CarePlanSerializer(plan).data
+        plan = getattr(obj, 'care_plan', None)
+        return CarePlanSerializer(plan).data if plan else None
 
 
 # ============================================
