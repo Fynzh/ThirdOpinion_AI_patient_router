@@ -117,7 +117,7 @@ def send_care_plan_email(plan) -> bool:
 Телефон:        {phone}
 
 ════════════════════════════════════════
-ЗАКЛЮЧЕНИЕ РЕНТГЕНОЛОГА
+ЗАКЛЮЧЕНИЕ ПЛАТФОРМЫ «Третье Мнение»
 ════════════════════════════════════════
 {study.radiologist_conclusion}
 
@@ -162,7 +162,7 @@ def send_care_plan_email(plan) -> bool:
     </table>
 
     <h3 style="color: #495057; border-bottom: 1px solid #dee2e6; padding-bottom: 6px;">
-        Заключение рентгенолога
+        Заключение платформы «Третье Мнение»
     </h3>
     <p style="background: #f8f9fa; padding: 12px; border-radius: 4px;">
         {escape(study.radiologist_conclusion)}

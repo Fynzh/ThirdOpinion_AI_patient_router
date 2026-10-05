@@ -1,0 +1,103 @@
+.form { 
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+.title { margin: 0 0 24px; }
+
+.section { display: grid; gap: 12px; margin-bottom: 28px; }
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #9aa0a9;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.sectionTitle::before {
+  content: '';
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #3ddc97, #2fa8ff);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.field { display: grid; gap: 6px; color: #9aa0a9; font-size: 13px; }
+
+.input {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid #3a3d44;
+  border-radius: 4px;
+  background: #2a2d33;
+  color: #fff;
+  color-scheme: dark;
+  font: inherit;
+}
+.input:focus,
+.textarea:focus { outline: 2px solid #2fa8ff; outline-offset: -1px; }
+
+.file { padding: 0; line-height: 1px; color: #9aa0a9; }
+.file::file-selector-button {
+  height: 44px;
+  margin-right: 10px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  background: #3a3d44;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+.file::file-selector-button:hover { background: #4a4e57; }
+
+.textarea {
+  min-height: 200px;
+  padding: 12px 14px;
+  border: 1px solid #3a3d44;
+  border-radius: 12px;
+  background: #2a2d33;
+  color: #fff;
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.hint { margin: 0; color: #f5c542; font-size: 13px; }
+.error { margin: 0 0 16px; color: #ff5c8a; }
+
+.submit {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3ddc97, #2fa8ff);
+  background-size: 200% 200%;
+  background-position: 0% 50%;
+  color: #15171a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, background-position 0.4s ease;
+}
+.submit:hover:not(:disabled) {
+  background-position: 100% 50%;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(47, 168, 255, 0.4);
+}
+.submit:active:not(:disabled) { transform: scale(0.98); box-shadow: none; }
+.submit:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (prefers-reduced-motion: reduce) { .submit { transition: none; } }

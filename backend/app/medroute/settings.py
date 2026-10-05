@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/6.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 from corsheaders.defaults import default_headers
 import os
@@ -85,7 +85,7 @@ WSGI_APPLICATION = 'medroute.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.environ.get('DB_PATH', BASE_DIR / 'db.sqlite3'),
     }
 }
 
@@ -186,10 +186,6 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
-# ============================================
-# EMAIL (заглушка для хакатона)
-# ============================================
-# Новый формат Django 6.1. Письма печатаются в консоль.
 
 
 MEDIA_URL = "/media/"
@@ -202,7 +198,7 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'MedRoute API',
     'DESCRIPTION': (
         'Сервис формирования персонального плана дальнейшего обращения пациента '
-        'на основе ИИ-анализа заключений рентгенолога. '
+        'на основе ИИ-анализа заключений платформы «Третье Мнение». '
         'Кейс компании «Третье Мнение».'
     ),
     'VERSION': '1.0.0',
