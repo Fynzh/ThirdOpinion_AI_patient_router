@@ -31,20 +31,32 @@ class StudyListCreateView(APIView):
             Study.objects
             .select_related('patient', 'care_plan')
             .prefetch_related('recommendations')
-            .all()
+            .filter(patient__created_by=request.user)    # ← ТОЛЬКО СВОИ
+            .order_by('-created_at')
         )
         serializer = StudyListSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def post(self, request):
+        # 1. Проверяем, что пациент принадлежит текущему врачу
+        patient_id = request.data.get("patient")
+        if patient_id:
+            try:
+                patient = Patient.objects.get(id=patient_id, created_by=request.user)
+            except Patient.DoesNotExist:
+                return Response(
+                    {"error": "Пациент не найден или не принадлежит вам",
+                     "code": "PATIENT_NOT_FOUND"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        # 2. Создаём исследование
         serializer = StudyCreateUpdateSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {
-                    "error": "Некорректные данные",
-                    "code": "VALIDATION_ERROR",
-                    "details": serializer.errors,
-                },
+                {"error": "Некорректные данные",
+                 "code": "VALIDATION_ERROR",
+                 "details": serializer.errors},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -65,6 +77,14 @@ class StudyDetailView(RetrieveAPIView):
     queryset = Study.objects.select_related('patient', 'care_plan').prefetch_related('recommendations')
     serializer_class = StudyDetailSerializer
 
+    def get_queryset(self):
+        return (
+            Study.objects
+            .select_related('patient', 'care_plan')
+            .prefetch_related('recommendations')
+            .filter(patient__created_by=self.request.user)    # ← ТОЛЬКО СВОИ
+        )
+        
 
 class GenerateRecommendationsView(APIView):
     """
@@ -73,7 +93,7 @@ class GenerateRecommendationsView(APIView):
     """
     def post(self, request, pk):
         try:
-            study = Study.objects.get(id=pk)
+            study = Study.objects.get(id=pk, patient__created_by=request.user)
         except Study.DoesNotExist:
             return Response(
                 {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
@@ -157,7 +177,10 @@ class EditRecommendationView(APIView):
     """
     def patch(self, request, pk):
         try:
-            rec = Recommendation.objects.get(id=pk)
+            rec = Recommendation.objects.get(
+                id=pk,
+                study__patient__created_by=request.user,
+            )
         except Recommendation.DoesNotExist:
             return Response(
                 {"error": "Рекомендация не найдена", "code": "RECOMMENDATION_NOT_FOUND"},
@@ -198,7 +221,10 @@ class ApproveRecommendationView(APIView):
     """
     def post(self, request, pk):
         try:
-            rec = Recommendation.objects.get(id=pk)
+            rec = Recommendation.objects.get(
+                id=pk,
+                study__patient__created_by=request.user,
+            )
         except Recommendation.DoesNotExist:
             return Response(
                 {"error": "Рекомендация не найдена", "code": "RECOMMENDATION_NOT_FOUND"},
@@ -224,7 +250,10 @@ class RejectRecommendationView(APIView):
     """
     def post(self, request, pk):
         try:
-            rec = Recommendation.objects.get(id=pk)
+            rec = Recommendation.objects.get(
+                id=pk,
+                study__patient__created_by=request.user,
+            )
         except Recommendation.DoesNotExist:
             return Response(
                 {"error": "Рекомендация не найдена", "code": "RECOMMENDATION_NOT_FOUND"},
@@ -247,7 +276,7 @@ class AddDoctorRecommendationView(APIView):
     """
     def post(self, request, pk):
         try:
-            study = Study.objects.get(id=pk)
+            study = Study.objects.get(id=pk, patient__created_by=request.user)
         except Study.DoesNotExist:
             return Response(
                 {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
@@ -298,7 +327,7 @@ class UpdateCarePlanCommentView(APIView):
     def patch(self, request, pk):
         # 1. Достаём исследование
         try:
-            study = Study.objects.get(id=pk)
+            study = Study.objects.get(id=pk, patient__created_by=request.user)
         except Study.DoesNotExist:
             return Response(
                 {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
@@ -355,7 +384,7 @@ class SendCarePlanView(APIView):
     def post(self, request, pk):
         # 1. Достаём исследование
         try:
-            study = Study.objects.get(id=pk)
+            study = Study.objects.get(id=pk, patient__created_by=request.user)
         except Study.DoesNotExist:
             return Response(
                 {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
@@ -437,7 +466,7 @@ class StudyUpdateView(APIView):
 
     def patch(self, request, pk):
         try:
-            study = Study.objects.get(id=pk)
+            study = Study.objects.get(id=pk, patient__created_by=request.user)
         except Study.DoesNotExist:
             return Response(
                 {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
@@ -477,7 +506,7 @@ class StudyUploadFileView(APIView):
 
     def post(self, request, pk):
         try:
-            study = Study.objects.get(id=pk)
+            study = Study.objects.get(id=pk, patient__created_by=request.user)
         except Study.DoesNotExist:
             return Response(
                 {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
@@ -529,7 +558,7 @@ class StudyDownloadFileView(APIView):
     ]
     def get(self, request, pk):
         try:
-            study = Study.objects.get(id=pk)
+            study = Study.objects.get(id=pk, patient__created_by=request.user)
         except Study.DoesNotExist:
             return Response(
                 {"error": "Исследование не найдено", "code": "STUDY_NOT_FOUND"},
@@ -568,7 +597,11 @@ class PatientListCreateView(APIView):
     POST /api/patients/   — создать пациента
     """
     def get(self, request):
-        patients = Patient.objects.all().order_by('-created_at')
+        patients = (
+            Patient.objects
+            .filter(created_by=request.user)      # ← ТОЛЬКО СВОИ
+            .order_by('-created_at')
+        )
         return Response(PatientSerializer(patients, many=True).data)
 
     def post(self, request):
@@ -587,6 +620,7 @@ class PatientListCreateView(APIView):
         patient = Patient.objects.create(
             age=data["age"],
             sex=data["sex"],
+            created_by=request.user,             # ← ВЛАДЕЛЕЦ
         )
 
         # 2. Сохраняем персональные данные в JSON-реестр
@@ -616,7 +650,7 @@ class PatientDetailView(APIView):
     """
     def get(self, request, pk):
         try:
-            patient = Patient.objects.get(id=pk)
+            patient = Patient.objects.get(id=pk, created_by=request.user)
         except Patient.DoesNotExist:
             return Response(
                 {"error": "Пациент не найден", "code": "PATIENT_NOT_FOUND"},
@@ -626,7 +660,7 @@ class PatientDetailView(APIView):
 
     def patch(self, request, pk):
         try:
-            patient = Patient.objects.get(id=pk)
+            patient = Patient.objects.get(id=pk, created_by=request.user)
         except Patient.DoesNotExist:
             return Response(
                 {"error": "Пациент не найден", "code": "PATIENT_NOT_FOUND"},
@@ -677,7 +711,7 @@ class PatientAvailableStudiesView(APIView):
     """
     def get(self, request, pk):
         try:
-            patient = Patient.objects.get(id=pk)
+            patient = Patient.objects.get(id=pk, created_by=request.user)
         except Patient.DoesNotExist:
             return Response(
                 {"error": "Пациент не найден", "code": "PATIENT_NOT_FOUND"},

@@ -10,19 +10,36 @@ class Patient(models.Model):
     хранятся в отдельном JSON-файле patient_registry.json.
     В БД — только код и обезличенные медицинские параметры.
     """
+
     SEX_CHOICES = [
         ("M", "Мужской"),
         ("F", "Женский"),
     ]
 
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="patients",
+        null=True, blank=True,
+        verbose_name="Создал врач",
+        help_text="Врач, который создал карточку. Видит только он.",
+    )
+
     patient_code = models.CharField(
-        max_length=50, unique=True, blank=True,
+        max_length=50,
+        unique=True,
+        blank=True,
         verbose_name="Код пациента",
         help_text="Генерируется автоматически. Например: PAT-2026-A3F8B1",
     )
-    age = models.PositiveIntegerField(verbose_name="Возраст")
+    age = models.PositiveIntegerField(
+        verbose_name="Возраст",
+    )
     sex = models.CharField(
-        max_length=1, choices=SEX_CHOICES, verbose_name="Пол"
+        max_length=1,
+        choices=SEX_CHOICES,
+        verbose_name="Пол",
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -41,9 +58,11 @@ class Patient(models.Model):
 
     @staticmethod
     def _generate_code() -> str:
-        """Генерирует уникальный код вида PAT-2026-A3F8B1."""
+        import uuid
+        from datetime import datetime
         year = datetime.now().year
         return f"PAT-{year}-{uuid.uuid4().hex[:6].upper()}"
+
 
 class Study(models.Model):
     MODALITY_CHOICES = [
