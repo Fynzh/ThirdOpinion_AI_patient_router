@@ -29,8 +29,8 @@ class StudyListCreateView(APIView):
     def get(self, request):
         queryset = (
             Study.objects
-            .select_related('patient')
-            .prefetch_related('care_plans')
+            .select_related('patient', 'care_plan')
+            .prefetch_related('recommendations')
             .filter(patient__created_by=request.user)    # ← ТОЛЬКО СВОИ
             .order_by('-created_at')
         )
@@ -80,11 +80,11 @@ class StudyDetailView(RetrieveAPIView):
     def get_queryset(self):
         return (
             Study.objects
-            .select_related('patient')
-            .prefetch_related('recommendations', 'care_plans')
+            .select_related('patient', 'care_plan')
+            .prefetch_related('recommendations')
             .filter(patient__created_by=self.request.user)    # ← ТОЛЬКО СВОИ
         )
-
+        
 
 class GenerateRecommendationsView(APIView):
     """

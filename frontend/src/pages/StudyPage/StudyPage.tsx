@@ -16,6 +16,7 @@ import { approveRecommendation, editRecommendation, rejectRecommendation } from 
 import { useStudy } from '@/hooks/useStudy';
 import { SEX_LABELS } from '@/types/patient';
 import { formatDate } from '@/utils/formatDateTime';
+import { ApiError } from '@/api/http';
 import s from './StudyPage.module.css';
 
 export default function StudyPage() {
@@ -40,7 +41,14 @@ export default function StudyPage() {
   };
 
   if (isLoading) return <p>Загрузка…</p>;
-  if (error) return <p role="alert">{error.message}</p>;
+  if (error) {
+    const notFound = error instanceof ApiError && error.status === 404;
+    return (
+      <p role="alert">
+        {notFound ? 'Исследование не найдено или у вас нет доступа' : error.message}
+      </p>
+    );
+  }
   if (!study) return null;
 
   const p = study.patient;
