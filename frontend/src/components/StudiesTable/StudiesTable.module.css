@@ -103,3 +103,43 @@
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+/* Колонка со стрелкой */
+.table .toggleCell {
+  width: 36px;
+  padding-right: 0;
+}
+
+.toggle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #9aa0a9;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.toggle:hover { background: #3a3d44; color: #fff; }
+.toggle:focus-visible { outline: 2px solid #2fa8ff; outline-offset: 2px; }
+
+.chevron { width: 16px; height: 16px; transition: transform 0.2s ease; }
+.chevronOpen { transform: rotate(90deg); }
+
+/* Вложенные исследования пациента */
+.child {
+  background: #23262b;
+  animation: childIn 0.2s ease;
+}
+
+@keyframes childIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron { transition: none; }
+  .child { animation: none; }
+}

@@ -9,6 +9,15 @@
   background: #2a2d33; border: 1px solid #3a3d44; border-radius: 8px;
   padding: 16px; line-height: 1.5; white-space: pre-wrap;
 }
+.nocards {
+  background: #2a2d33;
+  border: 1px solid #3a3d44;
+  border-left: 4px solid #9aa0a9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-left-color: #3ddc97;
+}
 .row { display: flex; justify-content: space-between; align-items: center; }
 .btn {
   background: #3a3d44; color: #fff; border: 0; border-radius: 6px;

@@ -56,7 +56,7 @@ class Study(models.Model):
     STATUS_CHOICES = [
         ('processing', 'ИИ обрабатывает'),
         ('ai_done', 'ИИ обработал — ждёт врача'),
-        ('in_review', 'Врач проверяет'),
+        ('in_review', 'В работе'),
         ('approved', 'План утверждён'),
         ('sent', 'Отправлено пациенту'),
     ]

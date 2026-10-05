@@ -92,7 +92,7 @@ export default function StudyPage() {
         {locked && (
           <p className={s.note}>План уже отправлен пациенту, рекомендации больше нельзя менять.</p>
         )}
-        {study.recommendations.length === 0 && <p className={s.sub}>Рекомендаций пока нет</p>}
+        {study.recommendations.length === 0 && <p className={s.nocards}>Отклюнений не выявлено</p>}
 
         {study.recommendations.map((rec) => (
           <RecommendationCard
